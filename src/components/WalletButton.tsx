@@ -34,7 +34,7 @@ export default function WalletButton() {
   const [copied, setCopied] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown on outside click
+  // Close dropdown on click outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -70,7 +70,7 @@ export default function WalletButton() {
         <button
           onClick={connect}
           disabled={isConnecting}
-          className="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-accent-hover active:scale-[0.98] disabled:opacity-60 shadow-sm"
+          className="apple-button-primary px-5 py-2.5 text-sm font-semibold inline-flex items-center gap-2 cursor-pointer disabled:opacity-60"
         >
           {isConnecting ? (
             <Loader2 size={16} className="animate-spin" />
@@ -82,29 +82,22 @@ export default function WalletButton() {
       ) : (
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="inline-flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-2 text-sm font-medium text-text-primary transition-all hover:border-accent/40 hover:bg-bg shadow-sm"
+          className="inline-flex items-center gap-3 rounded-full border border-[#E2E8F0] bg-white px-4 py-2 text-sm font-semibold text-[#0F172A] transition-all hover:bg-[#F8FAFC] shadow-sm cursor-pointer"
         >
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent/10 text-accent font-semibold">
-            <Wallet size={14} />
+          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#2563EB]/10 text-[#2563EB]">
+            <Wallet size={13} />
           </div>
           <div className="text-left leading-tight">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-text-secondary font-medium">
-                {walletName}
-              </span>
-              <span className="h-1 w-1 rounded-full bg-success" />
-            </div>
-            <div className="font-semibold text-text-primary">
+            <span className="font-semibold text-[#0F172A]">
               {truncateAddress(address)}
-            </div>
+            </span>
           </div>
-          <div className="h-4 w-px bg-border my-auto" />
-          <span className="text-xs font-semibold text-accent bg-accent-light px-2 py-1 rounded-md">
+          <span className="text-xs font-bold text-[#2563EB] bg-[#DBEAFE] px-2.5 py-0.5 rounded-full">
             {parseFloat(balance).toFixed(2)} XLM
           </span>
           <ChevronDown
             size={14}
-            className={`text-text-secondary transition-transform duration-200 ${
+            className={`text-[#64748B] transition-transform duration-200 ${
               isOpen ? "rotate-180" : ""
             }`}
           />
@@ -113,80 +106,83 @@ export default function WalletButton() {
 
       {/* Menu dropdown */}
       {isConnected && isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-64 animate-fade-in rounded-xl border border-border bg-card p-1.5 shadow-lg z-50">
-          <div className="px-3 py-2 border-b border-border/60">
-            <p className="text-xs text-text-secondary">Connected Address</p>
-            <p className="text-xs font-mono font-medium text-text-primary truncate mt-0.5">
+        <div className="absolute right-0 top-full mt-2 w-72 animate-fade-in-up rounded-2xl border border-[#E2E8F0] bg-white p-2 shadow-xl z-50">
+          <div className="px-3 py-2.5 border-b border-[#E2E8F0]/70 bg-[#F8FAFC] rounded-xl mb-1">
+            <div className="flex items-center justify-between text-xs text-[#64748B] mb-0.5">
+              <span>Wallet Connected</span>
+              <span className="font-semibold text-[#2563EB]">{walletName}</span>
+            </div>
+            <p className="text-xs font-mono font-bold text-[#0F172A] truncate">
               {address}
             </p>
           </div>
 
           <button
             onClick={handleCopyAddress}
-            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-text-primary transition-colors hover:bg-bg mt-1"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold text-[#0F172A] transition-colors hover:bg-[#F8FAFC] cursor-pointer"
           >
             {copied ? (
-              <Check size={14} className="text-success" />
+              <Check size={15} className="text-[#16A34A]" />
             ) : (
-              <Copy size={14} className="text-text-secondary" />
+              <Copy size={15} className="text-[#64748B]" />
             )}
-            <span>{copied ? "Address Copied!" : "Copy Full Address"}</span>
+            <span>{copied ? "Address Copied!" : "Copy Account Address"}</span>
           </button>
 
-          <div className="border-t border-border/60 my-1" />
+          <div className="border-t border-[#E2E8F0]/70 my-1" />
 
-          <div className="px-3 py-1 text-[11px] font-semibold text-text-secondary uppercase tracking-wider">
-            Switch Wallet
+          <div className="px-3 py-1.5 text-[10px] font-bold text-[#64748B] uppercase tracking-wider">
+            Switch Wallet Extension
           </div>
           {availableWallets.map((w) => (
             <button
               key={w.id}
               onClick={() => handleSwitchWallet(w.id)}
-              className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-medium text-text-primary transition-colors hover:bg-bg"
+              className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold text-[#0F172A] transition-colors hover:bg-[#F8FAFC] cursor-pointer"
             >
-              <div className="flex items-center gap-2">
-                <ArrowLeftRight size={14} className="text-text-secondary" />
-                <span>{w.name}</span>
+              <div className="flex items-center gap-2.5">
+                <ArrowLeftRight size={14} className="text-[#64748B]" />
+                <span>{w.name} Wallet</span>
               </div>
               {walletName === w.name && (
-                <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                <span className="h-2 w-2 rounded-full bg-[#2563EB]" />
               )}
             </button>
           ))}
 
-          <div className="border-t border-border/60 my-1" />
+          <div className="border-t border-[#E2E8F0]/70 my-1" />
 
           <button
             onClick={() => {
               setIsOpen(false);
               disconnect();
             }}
-            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-error transition-colors hover:bg-error-light"
+            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-semibold text-[#DC2626] transition-colors hover:bg-[#FEE2E2] cursor-pointer"
           >
-            <LogOut size={14} />
+            <LogOut size={15} />
             <span>Disconnect Wallet</span>
           </button>
         </div>
       )}
 
-      {/* Error alert toast */}
+      {/* Error Toast */}
       {error && (
-        <div className="absolute right-0 top-full mt-3 w-80 animate-fade-in rounded-xl border border-error/20 bg-error-light p-3.5 shadow-md z-50">
+        <div className="absolute right-0 top-full mt-3 w-80 animate-fade-in-up rounded-2xl border border-[#DC2626]/30 bg-[#FEE2E2] p-4 shadow-lg z-50">
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-start gap-2.5">
-              <AlertCircle size={16} className="text-error shrink-0 mt-0.5" />
+              <AlertCircle size={16} className="text-[#DC2626] shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs font-semibold text-error">Wallet Notice</p>
-                <p className="text-xs text-error/90 leading-relaxed mt-0.5">
+                <p className="text-xs font-bold text-[#DC2626]">Wallet Alert</p>
+                <p className="text-xs text-[#DC2626]/90 leading-relaxed mt-0.5">
                   {error}
                 </p>
               </div>
             </div>
             <button
               onClick={clearError}
-              className="text-error/60 hover:text-error rounded p-0.5"
+              className="text-[#DC2626]/60 hover:text-[#DC2626] rounded p-0.5 cursor-pointer"
             >
-              <X size={14} />
+              <X size={15} />
             </button>
           </div>
         </div>

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useWallet } from "@/contexts/WalletContext";
-import { Heart, AlertCircle, Wallet } from "lucide-react";
+import { Heart, AlertCircle, Wallet, Loader2 } from "lucide-react";
 
 interface DonationFormProps {
   onDonate: (amountXlm: number) => Promise<void>;
@@ -20,7 +20,7 @@ export default function DonationForm({ onDonate, isPending }: DonationFormProps)
     e.preventDefault();
     setError(null);
 
-    // If not connected, trigger wallet connect immediately!
+    // If wallet is not connected, open wallet connect modal immediately
     if (!isConnected) {
       await connect();
       return;
@@ -29,7 +29,7 @@ export default function DonationForm({ onDonate, isPending }: DonationFormProps)
     const numAmount = parseFloat(amount);
 
     if (!amount || isNaN(numAmount)) {
-      setError("Please enter a valid XLM amount.");
+      setError("Please enter a valid donation amount in XLM.");
       return;
     }
 
@@ -44,10 +44,9 @@ export default function DonationForm({ onDonate, isPending }: DonationFormProps)
     }
 
     const balanceNum = parseFloat(balance || "0");
-    // Require 1 XLM reserved for base reserve & tx fees
     if (balanceNum > 0 && numAmount > balanceNum - 0.5) {
       setError(
-        `Insufficient XLM balance. Available: ${balanceNum.toFixed(2)} XLM (reserve required for fees).`
+        `Insufficient XLM balance. Available: ${balanceNum.toFixed(2)} XLM (0.5 XLM reserved for base reserve & network fees).`
       );
       return;
     }
@@ -56,46 +55,47 @@ export default function DonationForm({ onDonate, isPending }: DonationFormProps)
       await onDonate(numAmount);
       setAmount("");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Donation failed";
+      const msg = err instanceof Error ? err.message : "Donation transaction failed";
       setError(msg);
     }
   };
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-bold text-text-primary">Support Campaign</h3>
-          <p className="mt-1 text-xs text-text-secondary">
-            Directly donate XLM via Soroban smart contract on Stellar Testnet.
-          </p>
-        </div>
-      </div>
+    <div className="apple-card p-6 sm:p-10 animate-fade-in-up">
+      <h2 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight">
+        Make a Contribution
+      </h2>
+      <p className="mt-1 text-sm text-[#64748B]">
+        Select a preset amount or enter your custom XLM donation amount below.
+      </p>
 
-      <form onSubmit={handleSubmit} className="mt-5">
-        {/* Quick select presets */}
-        <div className="grid grid-cols-4 gap-2">
-          {presetAmounts.map((preset) => (
-            <button
-              key={preset}
-              type="button"
-              onClick={() => {
-                setAmount(preset.toString());
-                setError(null);
-              }}
-              className={`rounded-xl border py-2.5 text-xs font-semibold transition-all ${
-                amount === preset.toString()
-                  ? "border-accent bg-accent-light text-accent shadow-sm"
-                  : "border-border bg-bg text-text-secondary hover:border-accent/40 hover:text-text-primary"
-              }`}
-            >
-              {preset} XLM
-            </button>
-          ))}
+      <form onSubmit={handleSubmit} className="mt-6">
+        {/* Preset Amount Chips */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {presetAmounts.map((preset) => {
+            const isSelected = amount === preset.toString();
+            return (
+              <button
+                key={preset}
+                type="button"
+                onClick={() => {
+                  setAmount(preset.toString());
+                  setError(null);
+                }}
+                className={`py-3.5 px-4 rounded-2xl border text-sm font-semibold transition-all cursor-pointer ${
+                  isSelected
+                    ? "bg-[#2563EB] text-white border-[#2563EB] shadow-md shadow-[#2563EB]/20 scale-[1.02]"
+                    : "bg-[#F8FAFC] text-[#0F172A] border-[#E2E8F0] hover:border-[#2563EB]/40 hover:bg-white"
+                }`}
+              >
+                {preset} XLM
+              </button>
+            );
+          })}
         </div>
 
-        {/* Custom input */}
-        <div className="relative mt-3.5">
+        {/* Custom Input */}
+        <div className="relative mt-4">
           <input
             type="number"
             value={amount}
@@ -106,59 +106,40 @@ export default function DonationForm({ onDonate, isPending }: DonationFormProps)
             placeholder="Custom amount (e.g. 15.5)"
             step="any"
             min="0"
-            className="w-full rounded-xl border border-border bg-bg px-4 py-3 pr-16 text-sm text-text-primary placeholder-text-secondary outline-none transition-all focus:border-accent focus:bg-card focus:ring-2 focus:ring-accent-light"
+            className="apple-input w-full py-4 px-5 pr-20 text-base font-medium"
           />
-          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-text-secondary bg-border/40 px-2 py-1 rounded">
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-[#64748B] bg-[#E2E8F0]/60 px-2.5 py-1 rounded-lg">
             XLM
-          </span>
+          </div>
         </div>
 
-        {/* Error notification */}
+        {/* Error Feedback Box */}
         {error && (
-          <div className="mt-3 flex items-start gap-2.5 rounded-xl bg-error-light border border-error/20 p-3 text-xs text-error animate-fade-in">
-            <AlertCircle size={15} className="mt-0.5 shrink-0" />
+          <div className="mt-4 flex items-start gap-3 rounded-2xl bg-[#FEE2E2] border border-[#DC2626]/20 p-4 text-xs font-medium text-[#DC2626] animate-fade-in-up">
+            <AlertCircle size={16} className="mt-0.5 shrink-0" />
             <span className="leading-relaxed">{error}</span>
           </div>
         )}
 
-        {/* Primary Action Button */}
+        {/* Main Action Button */}
         <button
           type="submit"
           disabled={isPending}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-3.5 px-6 text-sm font-semibold text-white transition-all hover:bg-accent-hover active:scale-[0.99] disabled:opacity-50 shadow-sm cursor-pointer"
+          className="apple-button-primary mt-5 flex w-full items-center justify-center gap-2 py-4 px-6 text-base font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isPending ? (
             <>
-              <svg
-                className="animate-spin h-4 w-4 text-white"
-                viewBox="0 0 24 24"
-                fill="none"
-              >
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  className="opacity-25"
-                />
-                <path
-                  d="M4 12a8 8 0 018-8"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                />
-              </svg>
-              <span>Processing Donation…</span>
+              <Loader2 size={18} className="animate-spin" />
+              <span>Confirming on Stellar Network…</span>
             </>
           ) : isConnected ? (
             <>
-              <Heart size={16} fill="currentColor" />
-              <span>Donate {amount ? `${amount} XLM` : "XLM"}</span>
+              <Heart size={18} fill="currentColor" />
+              <span>Donate {amount ? `${amount} XLM` : "XLM"} Now</span>
             </>
           ) : (
             <>
-              <Wallet size={16} />
+              <Wallet size={18} />
               <span>Connect Wallet to Donate</span>
             </>
           )}

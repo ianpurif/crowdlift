@@ -19,7 +19,7 @@ import { xlmToStroops, stroopsToXlm } from "@/lib/stellar";
 import { initWalletKit } from "@/lib/wallet";
 import { StellarWalletsKit } from "@creit-tech/stellar-wallets-kit";
 import type { TransactionInfo, DonationEvent } from "@/types";
-import { Rocket, ShieldCheck, HeartHandshake } from "lucide-react";
+import { Sparkles, Heart, ShieldCheck, ExternalLink } from "lucide-react";
 
 const CAMPAIGN_TITLE = "CrowdLift Community Fund";
 const CAMPAIGN_DESCRIPTION =
@@ -39,12 +39,12 @@ export default function HomePage() {
     state: "idle",
   });
 
-  // Donation events
+  // Event stream state
   const [events, setEvents] = useState<DonationEvent[]>([]);
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
   const latestLedgerRef = useRef(0);
 
-  // Fetch contract campaign metrics
+  // Fetch campaign metrics from Soroban contract
   const fetchCampaignData = useCallback(async () => {
     try {
       const [goalVal, raisedVal] = await Promise.all([
@@ -54,13 +54,13 @@ export default function HomePage() {
       setGoal(goalVal);
       setTotalRaised(raisedVal);
     } catch (error) {
-      console.error("Failed to read contract state:", error);
+      console.error("Failed to read campaign data:", error);
     } finally {
       setIsLoadingCampaign(false);
     }
   }, []);
 
-  // Fetch individual donor contribution
+  // Fetch donor contribution
   const fetchContribution = useCallback(async () => {
     if (!address) {
       setContribution(0);
@@ -70,11 +70,11 @@ export default function HomePage() {
       const val = await getContribution(address);
       setContribution(val);
     } catch (error) {
-      console.error("Failed to read user contribution:", error);
+      console.error("Failed to read donor contribution:", error);
     }
   }, [address]);
 
-  // Fetch contract donation events
+  // Fetch donation events from Soroban contract
   const fetchEvents = useCallback(async () => {
     try {
       const { events: newEvents, latestLedger } = await fetchDonationEvents(
@@ -101,18 +101,18 @@ export default function HomePage() {
     }
   }, [fetchCampaignData]);
 
-  // Initial load
+  // Initial mount load
   useEffect(() => {
     fetchCampaignData();
     fetchEvents();
   }, [fetchCampaignData, fetchEvents]);
 
-  // Refresh contribution when address updates
+  // Fetch contribution when connected address changes
   useEffect(() => {
     fetchContribution();
   }, [fetchContribution]);
 
-  // Event polling loop (every 10 seconds)
+  // Auto-sync contract events (polling loop every 10s)
   useEffect(() => {
     const interval = setInterval(fetchEvents, 10000);
     return () => clearInterval(interval);
@@ -132,7 +132,7 @@ export default function HomePage() {
       // Build & simulate transaction with footprint
       const tx = await buildDonateTransaction(address, amountStroops);
 
-      // Sign transaction using wallet extension
+      // Sign transaction via wallet extension
       initWalletKit();
       const { signedTxXdr } = await StellarWalletsKit.signTransaction(tx.toXDR(), {
         networkPassphrase: "Test SDF Network ; September 2015",
@@ -165,7 +165,7 @@ export default function HomePage() {
         rawMessage.toLowerCase().includes("cancel") ||
         rawMessage.toLowerCase().includes("denied")
       ) {
-        userMessage = "Transaction was cancelled in your wallet.";
+        userMessage = "Transaction was cancelled by user.";
       } else if (
         rawMessage.toLowerCase().includes("insufficient") ||
         rawMessage.toLowerCase().includes("underfunded")
@@ -175,12 +175,12 @@ export default function HomePage() {
         rawMessage.toLowerCase().includes("simulation failed") ||
         rawMessage.toLowerCase().includes("contract")
       ) {
-        userMessage = `Contract call failed: ${rawMessage}`;
+        userMessage = `Contract error: ${rawMessage}`;
       } else if (
         rawMessage.toLowerCase().includes("network") ||
         rawMessage.toLowerCase().includes("timeout")
       ) {
-        userMessage = "Network timeout. Please check Stellar Testnet status.";
+        userMessage = "Network timeout. Please check your Stellar Testnet connection.";
       }
 
       setTransaction({
@@ -191,19 +191,19 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg text-text-primary selection:bg-accent-light selection:text-accent">
-      {/* Navigation Header */}
-      <header className="sticky top-0 z-40 border-b border-border/80 bg-card/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3.5 sm:px-6">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] selection:bg-[#2563EB]/10 selection:text-[#2563EB]">
+      {/* Apple-style Top Header */}
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-[#E2E8F0] h-16 flex items-center">
+        <div className="mx-auto flex max-w-3xl w-full items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-white shadow-sm">
-              <Rocket size={18} />
+            <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#2563EB] text-white shadow-md shadow-[#2563EB]/20">
+              <Sparkles size={18} />
             </div>
-            <div>
-              <span className="text-lg font-bold text-text-primary tracking-tight">
+            <div className="flex items-center gap-2">
+              <span className="text-xl font-extrabold text-[#0F172A] tracking-tight">
                 CrowdLift
               </span>
-              <span className="ml-2 text-[10px] font-bold text-accent bg-accent-light px-2 py-0.5 rounded-full uppercase tracking-wide">
+              <span className="text-[10px] font-bold text-[#2563EB] bg-[#DBEAFE] px-2 py-0.5 rounded-full uppercase tracking-wider">
                 Testnet
               </span>
             </div>
@@ -213,92 +213,76 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-        <div className="grid gap-6 lg:grid-cols-5">
-          {/* Main Campaign Column */}
-          <div className="space-y-6 lg:col-span-3">
-            <CampaignCard
-              title={CAMPAIGN_TITLE}
-              description={CAMPAIGN_DESCRIPTION}
-              goalStroops={goal}
-              totalRaisedStroops={totalRaised}
-              isLoading={isLoadingCampaign}
-            />
+      {/* Main Centered Content Column */}
+      <main className="mx-auto max-w-3xl px-4 sm:px-6 py-10 space-y-8">
+        {/* Campaign Hero Card */}
+        <CampaignCard
+          title={CAMPAIGN_TITLE}
+          description={CAMPAIGN_DESCRIPTION}
+          goalStroops={goal}
+          totalRaisedStroops={totalRaised}
+          isLoading={isLoadingCampaign}
+        />
 
-            {/* Donor Contribution Highlight */}
-            {isConnected && contribution > 0 && (
-              <div className="rounded-2xl border border-accent/20 bg-accent-light/40 p-5 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-accent">
-                    <HeartHandshake size={16} />
-                    <span>Your Contributions</span>
-                  </div>
-                  <span className="text-xs font-bold text-accent bg-card px-2.5 py-1 rounded-full border border-accent/20">
-                    Donor Verified
-                  </span>
-                </div>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-text-primary">
-                    {stroopsToXlm(contribution).toFixed(2)}
-                  </span>
-                  <span className="text-xs font-semibold text-text-secondary">
-                    XLM Contributed
-                  </span>
-                </div>
+        {/* User Contribution Card */}
+        {isConnected && contribution > 0 && (
+          <div className="apple-card p-6 sm:p-8 border-[#2563EB]/20 bg-[#DBEAFE]/30 animate-fade-in-up">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-semibold text-[#2563EB]">
+                <Heart size={16} fill="currentColor" />
+                <span>Your Contribution</span>
               </div>
-            )}
-
-            {/* Donation Form */}
-            <DonationForm
-              onDonate={handleDonate}
-              isPending={transaction.state === "pending"}
-            />
-
-            {/* Transaction Alert Feedback */}
-            {transaction.state !== "idle" && (
-              <TransactionStatus
-                transaction={transaction}
-                onDismiss={() => setTransaction({ state: "idle" })}
-              />
-            )}
+              <span className="text-xs font-bold text-[#2563EB] bg-white px-3 py-1 rounded-full border border-[#2563EB]/20">
+                Verified Supporter
+              </span>
+            </div>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="text-3xl font-extrabold text-[#0F172A]">
+                {stroopsToXlm(contribution).toFixed(2)}
+              </span>
+              <span className="text-sm font-semibold text-[#64748B]">
+                XLM Donated
+              </span>
+            </div>
           </div>
+        )}
 
-          {/* Activity Feed Column */}
-          <div className="lg:col-span-2">
-            <ActivityFeed events={events} isLoading={isLoadingEvents} />
-          </div>
-        </div>
+        {/* Donation Form */}
+        <DonationForm
+          onDonate={handleDonate}
+          isPending={transaction.state === "pending"}
+        />
+
+        {/* Transaction Alert Box */}
+        {transaction.state !== "idle" && (
+          <TransactionStatus
+            transaction={transaction}
+            onDismiss={() => setTransaction({ state: "idle" })}
+          />
+        )}
+
+        {/* Activity Feed */}
+        <ActivityFeed events={events} isLoading={isLoadingEvents} />
       </main>
 
       {/* Footer */}
-      <footer className="mt-16 border-t border-border bg-card">
-        <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
-          <div className="flex flex-col items-center justify-between gap-3 text-xs text-text-secondary sm:flex-row">
-            <div className="flex items-center gap-1.5">
-              <ShieldCheck size={14} className="text-success" />
-              <span>
-                Powered by Soroban Smart Contracts on Stellar Testnet
-              </span>
-            </div>
-            <div className="flex items-center gap-4 font-medium">
-              <a
-                href="https://stellar.expert/explorer/testnet"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-accent transition-colors"
-              >
-                Stellar Expert
-              </a>
-              <a
-                href="https://soroban.stellar.org"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-accent transition-colors"
-              >
-                Soroban Docs
-              </a>
-            </div>
+      <footer className="mt-16 border-t border-[#E2E8F0] bg-white py-8">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#64748B]">
+          <div className="flex items-center gap-1.5 font-medium">
+            <ShieldCheck size={15} className="text-[#16A34A]" />
+            <span>Soroban Smart Contract Deployed on Stellar Testnet</span>
+          </div>
+
+          <div className="flex items-center gap-4 font-semibold">
+            <a
+              href="https://stellar.expert/explorer/testnet"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-[#2563EB] transition-colors flex items-center gap-1"
+            >
+              <span>Stellar Expert</span>
+              <ExternalLink size={12} />
+            </a>
           </div>
         </div>
       </footer>
