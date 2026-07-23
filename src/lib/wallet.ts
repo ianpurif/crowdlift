@@ -4,19 +4,18 @@ import {
   StellarWalletsKit,
   Networks,
 } from "@creit-tech/stellar-wallets-kit";
-import { FreighterModule, FREIGHTER_ID } from "@creit-tech/stellar-wallets-kit/modules/freighter";
-import { xBullModule, XBULL_ID } from "@creit-tech/stellar-wallets-kit/modules/xbull";
+import { defaultModules } from "@creit-tech/stellar-wallets-kit/modules/utils";
 
 let initialized = false;
 
 /**
- * Initialize StellarWalletsKit with Freighter and xBull modules.
+ * Initialize StellarWalletsKit with all default modules (Freighter, xBull, Albedo, Lobstr, Rabet, Hana, Klever, etc.).
  */
 export function initWalletKit(): typeof StellarWalletsKit {
   if (!initialized) {
     StellarWalletsKit.init({
       network: Networks.TESTNET,
-      modules: [new FreighterModule(), new xBullModule()],
+      modules: defaultModules(),
     });
     initialized = true;
   }
@@ -24,13 +23,15 @@ export function initWalletKit(): typeof StellarWalletsKit {
 }
 
 /**
- * Get list of available wallet options.
+ * Get list of available supported wallets.
  */
 export function getAvailableWallets(): { id: string; name: string }[] {
   return [
-    { id: FREIGHTER_ID, name: "Freighter" },
-    { id: XBULL_ID, name: "xBull" },
+    { id: "freighter", name: "Freighter" },
+    { id: "xbull", name: "xBull" },
+    { id: "albedo", name: "Albedo" },
+    { id: "lobstr", name: "Lobstr" },
+    { id: "rabet", name: "Rabet" },
+    { id: "hana", name: "Hana" },
   ];
 }
-
-export { FREIGHTER_ID, XBULL_ID };

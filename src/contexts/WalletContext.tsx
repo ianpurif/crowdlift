@@ -12,6 +12,9 @@ import { StellarWalletsKit } from "@creit-tech/stellar-wallets-kit";
 import { initWalletKit, getAvailableWallets } from "@/lib/wallet";
 import { fetchXlmBalance } from "@/lib/stellar";
 
+const STORAGE_CONNECTED = "crowdlift_wallet_connected";
+const STORAGE_WALLET_ID = "crowdlift_wallet_id";
+
 interface WalletContextType {
   address: string;
   balance: string;
@@ -53,6 +56,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
   }, [address]);
 
+  // Connect via authModal (opens the wallet selection modal with all supported wallets)
   const connect = useCallback(async () => {
     setIsConnecting(true);
     setError(null);
@@ -60,17 +64,19 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     try {
       const Kit = initWalletKit();
 
-      // Open authentication modal for wallet selection & connection
+      // Open multi-wallet modal
       const res = await Kit.authModal();
 
       if (res && res.address) {
         setAddress(res.address);
         setIsConnected(true);
 
+        let activeId = "freighter";
         let activeName = "Wallet";
         try {
           const mod = Kit.selectedModule;
           if (mod) {
+            activeId = mod.productId || "freighter";
             const found = availableWallets.find((w) => w.id === mod.productId);
             activeName = found?.name || mod.productName || "Wallet";
           }
@@ -78,6 +84,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           // Default
         }
         setWalletName(activeName);
+
+        // Save session for auto-reconnection on page refresh
+        try {
+          localStorage.setItem(STORAGE_CONNECTED, "true");
+          localStorage.setItem(STORAGE_WALLET_ID, activeId);
+        } catch {
+          // Ignore storage errors
+        }
 
         const bal = await fetchXlmBalance(res.address);
         setBalance(bal);
@@ -90,7 +104,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
             ? String((err as { message: unknown }).message)
             : String(err || "");
 
-      // Handle user cancellation gracefully
       if (
         rawMessage.includes("closed the modal") ||
         rawMessage.includes("User closed")
@@ -101,16 +114,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         rawMessage.toLowerCase().includes("denied") ||
         rawMessage.toLowerCase().includes("cancel")
       ) {
-        setError("Wallet connection rejected by user.");
+        setError("Wallet connection request was cancelled.");
       } else if (
         rawMessage.toLowerCase().includes("not installed") ||
         rawMessage.toLowerCase().includes("not connected") ||
         rawMessage.toLowerCase().includes("not available") ||
         rawMessage.toLowerCase().includes("not found")
       ) {
-        setError(
-          "Selected wallet extension was not found. Please install Freighter or xBull wallet extension."
-        );
+        setError("Selected wallet extension was not found. Please install the browser extension.");
       } else {
         setError(rawMessage || "Failed to connect wallet.");
       }
@@ -121,19 +132,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
   }, [availableWallets]);
 
-  const disconnect = useCallback(() => {
-    try {
-      StellarWalletsKit.disconnect();
-    } catch {
-      // Ignore
-    }
-    setAddress("");
-    setBalance("0");
-    setIsConnected(false);
-    setWalletName("");
-    setError(null);
-  }, []);
-
+  // Switch to a specific wallet
   const switchWallet = useCallback(
     async (walletId: string) => {
       setIsConnecting(true);
@@ -144,12 +143,21 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         Kit.setWallet(walletId);
 
         const wallet = availableWallets.find((w) => w.id === walletId);
-        setWalletName(wallet?.name || "Wallet");
+        const name = wallet?.name || walletId;
+        setWalletName(name);
 
         const { address: addr } = await Kit.fetchAddress();
         if (addr) {
           setAddress(addr);
           setIsConnected(true);
+
+          try {
+            localStorage.setItem(STORAGE_CONNECTED, "true");
+            localStorage.setItem(STORAGE_WALLET_ID, walletId);
+          } catch {
+            // Ignore
+          }
+
           const bal = await fetchXlmBalance(addr);
           setBalance(bal);
         }
@@ -161,24 +169,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
               ? String((err as { message: unknown }).message)
               : String(err || "");
 
-        const targetName = walletId === "freighter" ? "Freighter" : "xBull";
-
         if (
           rawMessage.toLowerCase().includes("not installed") ||
           rawMessage.toLowerCase().includes("not connected") ||
-          rawMessage.toLowerCase().includes("not available") ||
-          rawMessage.toLowerCase().includes("not found")
+          rawMessage.toLowerCase().includes("not available")
         ) {
-          setError(
-            `${targetName} wallet extension is not installed or unavailable. Please install ${targetName} extension.`
-          );
-        } else if (
-          rawMessage.toLowerCase().includes("reject") ||
-          rawMessage.toLowerCase().includes("denied")
-        ) {
-          setError(`Connection to ${targetName} rejected by user.`);
+          setError(`Selected wallet (${walletId}) extension is not installed.`);
         } else {
-          setError(rawMessage || `Failed to switch to ${targetName}.`);
+          setError(rawMessage || `Failed to switch wallet.`);
         }
       } finally {
         setIsConnecting(false);
@@ -186,6 +184,62 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     },
     [availableWallets]
   );
+
+  // Disconnect & clear session
+  const disconnect = useCallback(() => {
+    try {
+      StellarWalletsKit.disconnect();
+    } catch {
+      // Ignore
+    }
+
+    try {
+      localStorage.removeItem(STORAGE_CONNECTED);
+      localStorage.removeItem(STORAGE_WALLET_ID);
+    } catch {
+      // Ignore
+    }
+
+    setAddress("");
+    setBalance("0");
+    setIsConnected(false);
+    setWalletName("");
+    setError(null);
+  }, []);
+
+  // Auto-reconnect wallet session on page refresh
+  useEffect(() => {
+    try {
+      const isSavedConnected = localStorage.getItem(STORAGE_CONNECTED) === "true";
+      const savedWalletId = localStorage.getItem(STORAGE_WALLET_ID);
+
+      if (isSavedConnected && savedWalletId) {
+        const restoreSession = async () => {
+          try {
+            const Kit = initWalletKit();
+            Kit.setWallet(savedWalletId);
+            const { address: addr } = await Kit.fetchAddress();
+            if (addr) {
+              setAddress(addr);
+              setIsConnected(true);
+              const found = availableWallets.find((w) => w.id === savedWalletId);
+              setWalletName(found?.name || savedWalletId);
+              const bal = await fetchXlmBalance(addr);
+              setBalance(bal);
+            }
+          } catch (err) {
+            console.log("Auto-reconnect session expired or unavailable:", err);
+            localStorage.removeItem(STORAGE_CONNECTED);
+            localStorage.removeItem(STORAGE_WALLET_ID);
+          }
+        };
+
+        restoreSession();
+      }
+    } catch {
+      // Storage access error
+    }
+  }, [availableWallets]);
 
   // Periodically refresh balance
   useEffect(() => {
