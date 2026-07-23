@@ -77,15 +77,19 @@ export default function HomePage() {
   // Fetch donation events from Soroban contract
   const fetchEvents = useCallback(async () => {
     try {
-      const { events: newEvents, latestLedger } = await fetchDonationEvents(
-        latestLedgerRef.current || undefined
+      const { events: fetchedEvents, latestLedger } = await fetchDonationEvents(
+        latestLedgerRef.current ? latestLedgerRef.current : undefined
       );
 
-      if (newEvents.length > 0) {
+      if (fetchedEvents.length > 0) {
         setEvents((prev) => {
-          const existingIds = new Set(prev.map((e) => e.id));
-          const unique = newEvents.filter((e) => !existingIds.has(e.id));
-          return [...unique, ...prev].slice(0, 50);
+          const map = new Map<string, DonationEvent>();
+          prev.forEach((e) => map.set(e.id, e));
+          fetchedEvents.forEach((e) => map.set(e.id, e));
+          const combined = Array.from(map.values()).sort(
+            (a, b) => b.timestamp - a.timestamp
+          );
+          return combined.slice(0, 50);
         });
 
         fetchCampaignData();

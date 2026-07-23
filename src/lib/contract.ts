@@ -199,8 +199,8 @@ export async function fetchDonationEvents(
     const latestLedgerResponse = await server.getLatestLedger();
     const currentLedger = latestLedgerResponse.sequence;
 
-    // Look back ~5 minutes worth of ledgers (roughly 60 ledgers)
-    const from = startLedger || Math.max(1, currentLedger - 60);
+    // Look back ~10,000 ledgers (~14 hours of Stellar Testnet history)
+    const from = startLedger || Math.max(1, currentLedger - 10000);
 
     const topicDonate = StellarSdk.xdr.ScVal.scvSymbol("donate").toXDR("base64");
 
@@ -213,7 +213,7 @@ export async function fetchDonationEvents(
           topics: [[topicDonate]],
         },
       ],
-      limit: 20,
+      limit: 50,
     });
 
     const events: DonationEvent[] = (eventsResponse.events || []).map(
@@ -232,19 +232,26 @@ export async function fetchDonationEvents(
             }
           }
         } catch {
-          // Event parsing failed, use defaults
+          // Event parsing fallback
         }
+
+        const timestamp = event.ledgerClosedAt
+          ? new Date(event.ledgerClosedAt).getTime()
+          : Date.now() - index * 1000;
 
         return {
           id: event.id || `event-${index}-${Date.now()}`,
           donor,
           amount,
           totalRaised,
-          timestamp: Date.now() - index * 1000,
+          timestamp,
           txHash: event.txHash,
         };
       }
     );
+
+    // Sort newest first
+    events.sort((a, b) => b.timestamp - a.timestamp);
 
     return { events, latestLedger: currentLedger };
   } catch (error) {
