@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useWallet } from "@/contexts/WalletContext";
+import { useToast } from "@/contexts/ToastContext";
 import WalletButton from "@/components/WalletButton";
 import CampaignCard from "@/components/CampaignCard";
 import DonationForm from "@/components/DonationForm";
-import TransactionStatus from "@/components/TransactionStatus";
 import ActivityFeed from "@/components/ActivityFeed";
 import {
   getGoal,
@@ -19,7 +19,7 @@ import { xlmToStroops, stroopsToXlm } from "@/lib/stellar";
 import { initWalletKit } from "@/lib/wallet";
 import { StellarWalletsKit } from "@creit-tech/stellar-wallets-kit";
 import type { TransactionInfo, DonationEvent } from "@/types";
-import { Sparkles, Heart, ShieldCheck, ExternalLink } from "lucide-react";
+import { Heart, ShieldCheck, ExternalLink } from "lucide-react";
 
 const CAMPAIGN_TITLE = "CrowdLift Community Fund";
 const CAMPAIGN_DESCRIPTION =
@@ -27,6 +27,7 @@ const CAMPAIGN_DESCRIPTION =
 
 export default function HomePage() {
   const { address, isConnected, refreshBalance } = useWallet();
+  const { toast, dismissToast, showToast } = useToast();
 
   // Campaign state
   const [goal, setGoal] = useState(0);
@@ -78,7 +79,7 @@ export default function HomePage() {
   const fetchEvents = useCallback(async () => {
     try {
       const { events: fetchedEvents, latestLedger } = await fetchDonationEvents(
-        latestLedgerRef.current ? latestLedgerRef.current : undefined
+        latestLedgerRef.current ? latestLedgerRef.current : undefined,
       );
 
       if (fetchedEvents.length > 0) {
@@ -87,7 +88,7 @@ export default function HomePage() {
           prev.forEach((e) => map.set(e.id, e));
           fetchedEvents.forEach((e) => map.set(e.id, e));
           const combined = Array.from(map.values()).sort(
-            (a, b) => b.timestamp - a.timestamp
+            (a, b) => b.timestamp - a.timestamp,
           );
           return combined.slice(0, 50);
         });
@@ -125,10 +126,18 @@ export default function HomePage() {
   // Main donation handler
   const handleDonate = async (amountXlm: number) => {
     if (!isConnected || !address) {
-      throw new Error("Wallet is disconnected");
+      toast.error("Wallet Disconnected", "Please connect your wallet first.");
+      return;
     }
 
     setTransaction({ state: "pending" });
+
+    // Show loading toast
+    const toastId = showToast({
+      type: "loading",
+      title: "Processing Donation…",
+      message: `Submitting ${amountXlm} XLM transaction to Stellar Testnet.`,
+    });
 
     try {
       const amountStroops = xlmToStroops(amountXlm);
@@ -138,13 +147,26 @@ export default function HomePage() {
 
       // Sign transaction via wallet extension
       initWalletKit();
-      const { signedTxXdr } = await StellarWalletsKit.signTransaction(tx.toXDR(), {
-        networkPassphrase: "Test SDF Network ; September 2015",
-        address,
-      });
+      const { signedTxXdr } = await StellarWalletsKit.signTransaction(
+        tx.toXDR(),
+        {
+          networkPassphrase: "Test SDF Network ; September 2015",
+          address,
+        },
+      );
 
       // Submit to network
       const result = await submitTransaction(signedTxXdr);
+
+      // Dismiss loading toast
+      dismissToast(toastId);
+
+      // Show success toast
+      toast.success(
+        "Donation Confirmed!",
+        `Thank you! Your donation of ${amountXlm} XLM was successfully executed on-chain.`,
+        result.hash,
+      );
 
       setTransaction({
         state: "success",
@@ -159,6 +181,8 @@ export default function HomePage() {
         refreshBalance(),
       ]);
     } catch (error: unknown) {
+      dismissToast(toastId);
+
       const rawMessage =
         error instanceof Error ? error.message : String(error || "");
 
@@ -169,12 +193,14 @@ export default function HomePage() {
         rawMessage.toLowerCase().includes("cancel") ||
         rawMessage.toLowerCase().includes("denied")
       ) {
-        userMessage = "Transaction cancelled. You declined the signature request in your wallet extension.";
+        userMessage =
+          "Transaction cancelled. You declined the signature request in your wallet.";
       } else if (
         rawMessage.toLowerCase().includes("insufficient") ||
         rawMessage.toLowerCase().includes("underfunded")
       ) {
-        userMessage = "Transaction failed. Insufficient XLM balance in your wallet to cover the donation and Stellar transaction fees.";
+        userMessage =
+          "Transaction failed. Insufficient XLM in your wallet for donation and network fees.";
       } else if (
         rawMessage.toLowerCase().includes("simulation failed") ||
         rawMessage.toLowerCase().includes("contract")
@@ -185,8 +211,11 @@ export default function HomePage() {
         rawMessage.toLowerCase().includes("timeout") ||
         rawMessage.toLowerCase().includes("fetch")
       ) {
-        userMessage = "Network Connection Issue: Unable to reach Stellar Testnet RPC. Please check your internet connection.";
+        userMessage =
+          "Network Issue: Unable to reach Stellar Testnet RPC. Please try again.";
       }
+
+      toast.error("Donation Failed", userMessage);
 
       setTransaction({
         state: "failed",
@@ -197,8 +226,8 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] selection:bg-[#2563EB]/10 selection:text-[#2563EB]">
-      {/* Apple-style Top Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-[#E2E8F0] h-16 flex items-center">
+      {/* Top Header */}
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-[#E2E8F0] h-16 flex items-center">
         <div className="mx-auto flex max-w-6xl w-full items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-2.5">
             <img
@@ -220,10 +249,10 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Main 2-Column Responsive Layout (Above the Fold) */}
+      {/* Main 2-Column Responsive Layout */}
       <main className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Left Column (Campaign Hero & User Stats) */}
+          {/* Left Column */}
           <div className="lg:col-span-7 space-y-6">
             <CampaignCard
               title={CAMPAIGN_TITLE}
@@ -257,21 +286,13 @@ export default function HomePage() {
             )}
           </div>
 
-          {/* Right Column (Donation Form & Activity Stream) */}
+          {/* Right Column */}
           <div className="lg:col-span-5 space-y-6">
-            {/* Donation Form at top of right column */}
+            {/* Donation Form */}
             <DonationForm
               onDonate={handleDonate}
               isPending={transaction.state === "pending"}
             />
-
-            {/* Transaction Alert Box */}
-            {transaction.state !== "idle" && (
-              <TransactionStatus
-                transaction={transaction}
-                onDismiss={() => setTransaction({ state: "idle" })}
-              />
-            )}
 
             {/* Activity Feed */}
             <ActivityFeed events={events} isLoading={isLoadingEvents} />
@@ -323,7 +344,8 @@ export default function HomePage() {
               <span>Powered by Soroban Smart Contracts on Stellar Testnet</span>
             </div>
             <p className="font-medium text-[#64748B]">
-              &copy; {new Date().getFullYear()} CrowdLift Technologies. All rights reserved.
+              &copy; {new Date().getFullYear()} CrowdLift Technologies. All
+              rights reserved.
             </p>
           </div>
         </div>

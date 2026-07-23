@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { useWallet } from "@/contexts/WalletContext";
+import { useToast } from "@/contexts/ToastContext";
 import { truncateAddress } from "@/lib/stellar";
 import {
   Wallet,
@@ -10,8 +11,6 @@ import {
   ArrowLeftRight,
   Copy,
   Check,
-  AlertCircle,
-  X,
   Loader2,
 } from "lucide-react";
 
@@ -26,10 +25,10 @@ export default function WalletButton() {
     connect,
     disconnect,
     switchWallet,
-    clearError,
     availableWallets,
   } = useWallet();
 
+  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -48,11 +47,19 @@ export default function WalletButton() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Display error as Toast when error updates
+  useEffect(() => {
+    if (error) {
+      toast.error("Wallet Notice", error);
+    }
+  }, [error, toast]);
+
   const handleCopyAddress = async () => {
     if (!address) return;
     try {
       await navigator.clipboard.writeText(address);
       setCopied(true);
+      toast.info("Address Copied", "Full account address copied to clipboard.");
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // Fallback
@@ -62,6 +69,12 @@ export default function WalletButton() {
   const handleSwitchWallet = async (walletId: string) => {
     setIsOpen(false);
     await switchWallet(walletId);
+  };
+
+  const handleDisconnect = () => {
+    setIsOpen(false);
+    disconnect();
+    toast.info("Wallet Disconnected", "Your session has been disconnected.");
   };
 
   return (
@@ -153,38 +166,12 @@ export default function WalletButton() {
           <div className="border-t border-[#E2E8F0]/70 my-1" />
 
           <button
-            onClick={() => {
-              setIsOpen(false);
-              disconnect();
-            }}
+            onClick={handleDisconnect}
             className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-semibold text-[#DC2626] transition-colors hover:bg-[#FEE2E2] cursor-pointer"
           >
             <LogOut size={15} />
             <span>Disconnect Wallet</span>
           </button>
-        </div>
-      )}
-
-      {/* Error Toast */}
-      {error && (
-        <div className="absolute right-0 top-full mt-3 w-80 animate-fade-in-up rounded-2xl border border-[#DC2626]/30 bg-[#FEE2E2] p-4 shadow-lg z-50">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex items-start gap-2.5">
-              <AlertCircle size={16} className="text-[#DC2626] shrink-0 mt-0.5" />
-              <div>
-                <p className="text-xs font-bold text-[#DC2626]">Wallet Alert</p>
-                <p className="text-xs text-[#DC2626]/90 leading-relaxed mt-0.5">
-                  {error}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={clearError}
-              className="text-[#DC2626]/60 hover:text-[#DC2626] rounded p-0.5 cursor-pointer"
-            >
-              <X size={15} />
-            </button>
-          </div>
         </div>
       )}
     </div>
