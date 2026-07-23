@@ -198,11 +198,13 @@ export default function HomePage() {
     <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] selection:bg-[#2563EB]/10 selection:text-[#2563EB]">
       {/* Apple-style Top Header */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-[#E2E8F0] h-16 flex items-center">
-        <div className="mx-auto flex max-w-3xl w-full items-center justify-between px-4 sm:px-6">
+        <div className="mx-auto flex max-w-6xl w-full items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#2563EB] text-white shadow-md shadow-[#2563EB]/20">
-              <Sparkles size={18} />
-            </div>
+            <img
+              src="/icon.png"
+              alt="CrowdLift Logo"
+              className="h-9 w-9 rounded-2xl object-cover shadow-sm border border-[#E2E8F0]"
+            />
             <div className="flex items-center gap-2">
               <span className="text-xl font-extrabold text-[#0F172A] tracking-tight">
                 CrowdLift
@@ -217,76 +219,111 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Main Centered Content Column */}
-      <main className="mx-auto max-w-3xl px-4 sm:px-6 py-10 space-y-8">
-        {/* Campaign Hero Card */}
-        <CampaignCard
-          title={CAMPAIGN_TITLE}
-          description={CAMPAIGN_DESCRIPTION}
-          goalStroops={goal}
-          totalRaisedStroops={totalRaised}
-          isLoading={isLoadingCampaign}
-        />
+      {/* Main 2-Column Responsive Layout (Above the Fold) */}
+      <main className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left Column (Campaign Hero & User Stats) */}
+          <div className="lg:col-span-7 space-y-6">
+            <CampaignCard
+              title={CAMPAIGN_TITLE}
+              description={CAMPAIGN_DESCRIPTION}
+              goalStroops={goal}
+              totalRaisedStroops={totalRaised}
+              isLoading={isLoadingCampaign}
+            />
 
-        {/* User Contribution Card */}
-        {isConnected && contribution > 0 && (
-          <div className="apple-card p-6 sm:p-8 border-[#2563EB]/20 bg-[#DBEAFE]/30 animate-fade-in-up">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-semibold text-[#2563EB]">
-                <Heart size={16} fill="currentColor" />
-                <span>Your Contribution</span>
+            {/* Donor Contribution Highlight */}
+            {isConnected && contribution > 0 && (
+              <div className="apple-card p-6 sm:p-8 border-[#2563EB]/20 bg-[#DBEAFE]/30 animate-fade-in-up">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-[#2563EB]">
+                    <Heart size={16} fill="currentColor" />
+                    <span>Your Contribution</span>
+                  </div>
+                  <span className="text-xs font-bold text-[#2563EB] bg-white px-3 py-1 rounded-full border border-[#2563EB]/20">
+                    Verified Supporter
+                  </span>
+                </div>
+                <div className="mt-3 flex items-baseline gap-2">
+                  <span className="text-3xl font-extrabold text-[#0F172A]">
+                    {stroopsToXlm(contribution).toFixed(2)}
+                  </span>
+                  <span className="text-sm font-semibold text-[#64748B]">
+                    XLM Donated
+                  </span>
+                </div>
               </div>
-              <span className="text-xs font-bold text-[#2563EB] bg-white px-3 py-1 rounded-full border border-[#2563EB]/20">
-                Verified Supporter
-              </span>
-            </div>
-            <div className="mt-3 flex items-baseline gap-2">
-              <span className="text-3xl font-extrabold text-[#0F172A]">
-                {stroopsToXlm(contribution).toFixed(2)}
-              </span>
-              <span className="text-sm font-semibold text-[#64748B]">
-                XLM Donated
-              </span>
-            </div>
+            )}
           </div>
-        )}
 
-        {/* Donation Form */}
-        <DonationForm
-          onDonate={handleDonate}
-          isPending={transaction.state === "pending"}
-        />
+          {/* Right Column (Donation Form & Activity Stream) */}
+          <div className="lg:col-span-5 space-y-6">
+            {/* Donation Form at top of right column */}
+            <DonationForm
+              onDonate={handleDonate}
+              isPending={transaction.state === "pending"}
+            />
 
-        {/* Transaction Alert Box */}
-        {transaction.state !== "idle" && (
-          <TransactionStatus
-            transaction={transaction}
-            onDismiss={() => setTransaction({ state: "idle" })}
-          />
-        )}
+            {/* Transaction Alert Box */}
+            {transaction.state !== "idle" && (
+              <TransactionStatus
+                transaction={transaction}
+                onDismiss={() => setTransaction({ state: "idle" })}
+              />
+            )}
 
-        {/* Activity Feed */}
-        <ActivityFeed events={events} isLoading={isLoadingEvents} />
+            {/* Activity Feed */}
+            <ActivityFeed events={events} isLoading={isLoadingEvents} />
+          </div>
+        </div>
       </main>
 
       {/* Footer */}
-      <footer className="mt-16 border-t border-[#E2E8F0] bg-white py-8">
-        <div className="mx-auto max-w-3xl px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#64748B]">
-          <div className="flex items-center gap-1.5 font-medium">
-            <ShieldCheck size={15} className="text-[#16A34A]" />
-            <span>Soroban Smart Contract Deployed on Stellar Testnet</span>
+      <footer className="mt-16 border-t border-[#E2E8F0] bg-white py-10">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <img
+                src="/icon.png"
+                alt="CrowdLift Logo"
+                className="h-7 w-7 rounded-xl object-cover border border-[#E2E8F0]"
+              />
+              <span className="text-sm font-extrabold text-[#0F172A]">
+                CrowdLift
+              </span>
+            </div>
+
+            <div className="flex items-center gap-4 text-xs font-semibold text-[#64748B]">
+              <a
+                href="https://stellar.expert/explorer/testnet"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-[#2563EB] transition-colors flex items-center gap-1"
+              >
+                <span>Stellar Expert Explorer</span>
+                <ExternalLink size={12} />
+              </a>
+              <span>•</span>
+              <a
+                href="https://soroban.stellar.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-[#2563EB] transition-colors flex items-center gap-1"
+              >
+                <span>Soroban Docs</span>
+                <ExternalLink size={12} />
+              </a>
+            </div>
           </div>
 
-          <div className="flex items-center gap-4 font-semibold">
-            <a
-              href="https://stellar.expert/explorer/testnet"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-[#2563EB] transition-colors flex items-center gap-1"
-            >
-              <span>Stellar Expert</span>
-              <ExternalLink size={12} />
-            </a>
+          <div className="mt-6 pt-6 border-t border-[#E2E8F0]/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#64748B]">
+            <div className="flex items-center gap-1.5 font-medium">
+              <ShieldCheck size={14} className="text-[#16A34A]" />
+              <span>Powered by Soroban Smart Contracts on Stellar Testnet</span>
+            </div>
+            <p className="font-medium text-[#64748B]">
+              &copy; {new Date().getFullYear()} CrowdLift Technologies. All rights reserved.
+            </p>
           </div>
         </div>
       </footer>

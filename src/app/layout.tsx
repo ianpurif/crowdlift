@@ -7,6 +7,11 @@ export const metadata: Metadata = {
   description:
     "A decentralized crowdfunding platform built on Stellar Testnet. Support community projects with XLM donations.",
   keywords: ["Stellar", "crowdfunding", "Soroban", "XLM", "blockchain", "dApp"],
+  icons: {
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({
@@ -17,6 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <link rel="icon" href="/icon.png" sizes="any" />
         <link
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
           rel="stylesheet"
