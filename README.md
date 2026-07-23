@@ -1,36 +1,86 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CrowdLift
 
-## Getting Started
+A complete **Stellar Testnet Crowdfunding dApp** built with Next.js, Tailwind CSS, StellarWalletsKit, and Soroban (Rust).
 
-First, run the development server:
+## Features
+- Connect to Stellar wallets (Freighter, xBull)
+- View connected wallet address and XLM balance
+- Donate XLM to a crowdfunding campaign
+- See campaign progress and total donations in real-time
+- View recent donation events
+- Modern Apple-inspired UI design
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Tech Stack
+- **Frontend**: Next.js (App Router), React, Tailwind CSS v4, Lucide Icons
+- **Blockchain**: Stellar Testnet, Soroban Smart Contracts (Rust)
+- **SDKs**: `@stellar/stellar-sdk`, `@creit-tech/stellar-wallets-kit`
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Setup & Installation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Clone the repository and install dependencies:
+   ```bash
+   npm install
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. Setup environment variables:
+   Copy `.env.local.example` to `.env.local` and add your contract ID:
+   ```
+   NEXT_PUBLIC_CONTRACT_ID=YOUR_DEPLOYED_CONTRACT_ID
+   NEXT_PUBLIC_SOROBAN_RPC_URL=https://soroban-testnet.stellar.org
+   NEXT_PUBLIC_HORIZON_URL=https://horizon-testnet.stellar.org
+   NEXT_PUBLIC_NETWORK_PASSPHRASE=Test SDF Network ; September 2015
+   ```
 
-## Learn More
+3. Run the development server:
+   ```bash
+   npm run dev
+   ```
+   The app will be available at [http://localhost:3000](http://localhost:3000).
 
-To learn more about Next.js, take a look at the following resources:
+## Stellar Wallet Setup
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+To test the application, you need a Stellar wallet browser extension:
+1. Install [Freighter](https://www.freighter.app/) or [xBull](https://xbull.app/).
+2. Switch your wallet network to **Testnet**.
+3. Fund your testnet wallet using the [Stellar Laboratory Faucet](https://laboratory.stellar.org/#account-creator?network=test).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Smart Contract (Soroban)
 
-## Deploy on Vercel
+The smart contract is written in Rust and handles the crowdfunding logic (goal, donations, totals).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Prerequisites
+- Install [Rust](https://www.rust-lang.org/tools/install)
+- Add the WASM target: `rustup target add wasm32v1-none`
+- Install [Stellar CLI](https://developers.stellar.org/docs/build/smart-contracts/getting-started/setup)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Build & Deploy
+
+1. Build the contract:
+   ```bash
+   cd contracts/crowdfund
+   stellar contract build
+   ```
+
+2. Generate a deployer identity and fund it:
+   ```bash
+   stellar keys generate --global crowdlift-deployer --network testnet
+   ```
+
+3. Deploy the contract:
+   ```bash
+   stellar contract deploy --wasm contracts/crowdfund/target/wasm32v1-none/release/crowdfund.wasm --network testnet --source crowdlift-deployer
+   ```
+   *Note the returned Contract ID and add it to your `.env.local` file.*
+
+4. Initialize the campaign (Goal: 1000 XLM = 10,000,000,000 stroops):
+   ```bash
+   stellar contract invoke --id <CONTRACT_ID> --network testnet --source crowdlift-deployer -- initialize --admin $(stellar keys address crowdlift-deployer) --goal 10000000000
+   ```
+
+## Vercel Deployment
+
+This project is ready to be deployed to Vercel:
+1. Push your code to GitHub.
+2. Import the project in Vercel.
+3. Add the environment variables from `.env.local` in the Vercel dashboard.
+4. Deploy!
