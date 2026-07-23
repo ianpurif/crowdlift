@@ -1,10 +1,6 @@
 # CrowdLift — Stellar Testnet Crowdfunding dApp
 
 <p align="center">
-  <img src="public/icon.png" alt="CrowdLift Logo" width="100" />
-</p>
-
-<p align="center">
   <strong>A decentralized crowdfunding platform built on Stellar Testnet with Soroban smart contracts.</strong><br />
   Donate XLM directly to on-chain campaigns through any Stellar wallet.
 </p>
@@ -27,13 +23,13 @@ The app supports **all major Stellar wallets** through [StellarWalletsKit](https
 
 ## 📋 Submission Checklist
 
-| Requirement                          | Details                                                                                                                                                          |
-|--------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Live Demo**                        | [https://crowdlift.vercel.app/](https://crowdlift.vercel.app/)                                                                                                  |
-| **Wallet Options Screenshot**        | [`public/wallet_option.png`](public/wallet_option.png) — see above                                                                                              |
-| **Deployed Contract Address**        | `CCJKTTNZGUKVKH2M3WXKGAW2IKOK3VPI553D2SA2KPI4FV2Z6DNJ4K7G` — [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CCJKTTNZGUKVKH2M3WXKGAW2IKOK3VPI553D2SA2KPI4FV2Z6DNJ4K7G) |
+| Requirement                          | Details                                                                                                                                                                                                      |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Live Demo**                        | [https://crowdlift.vercel.app/](https://crowdlift.vercel.app/)                                                                                                                                               |
+| **Wallet Options Screenshot**        | [`public/wallet_option.png`](public/wallet_option.png) — see above                                                                                                                                           |
+| **Deployed Contract Address**        | `CCJKTTNZGUKVKH2M3WXKGAW2IKOK3VPI553D2SA2KPI4FV2Z6DNJ4K7G` — [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CCJKTTNZGUKVKH2M3WXKGAW2IKOK3VPI553D2SA2KPI4FV2Z6DNJ4K7G)             |
 | **Transaction Hash (Contract Call)** | `4f7b6087e2f633239a6602ce57cfe429f13d99391be5c2f4178bfc3721e0f40d` — [Verify on Stellar Expert](https://stellar.expert/explorer/testnet/tx/4f7b6087e2f633239a6602ce57cfe429f13d99391be5c2f4178bfc3721e0f40d) |
-| **README with Setup Instructions**   | This file ✅                                                                                                                                                      |
+| **README with Setup Instructions**   | This file ✅                                                                                                                                                                                                 |
 
 ---
 
@@ -52,15 +48,15 @@ The app supports **all major Stellar wallets** through [StellarWalletsKit](https
 
 ## 🛠️ Tech Stack
 
-| Layer            | Technology                                                                 |
-|------------------|----------------------------------------------------------------------------|
-| **Frontend**     | [Next.js 16](https://nextjs.org/) (App Router), React 19, TypeScript      |
-| **Styling**      | [Tailwind CSS v4](https://tailwindcss.com/)                                |
-| **Wallet**       | [StellarWalletsKit v2.5](https://stellarwalletskit.dev/)                   |
-| **Blockchain**   | [Stellar SDK v16](https://www.npmjs.com/package/@stellar/stellar-sdk)      |
-| **Smart Contract** | Soroban (Rust) — `soroban-sdk 22.0.6`                                    |
-| **Icons**        | [Lucide React](https://lucide.dev/)                                        |
-| **Network**      | Stellar Testnet                                                            |
+| Layer              | Technology                                                            |
+| ------------------ | --------------------------------------------------------------------- |
+| **Frontend**       | [Next.js 16](https://nextjs.org/) (App Router), React 19, TypeScript  |
+| **Styling**        | [Tailwind CSS v4](https://tailwindcss.com/)                           |
+| **Wallet**         | [StellarWalletsKit v2.5](https://stellarwalletskit.dev/)              |
+| **Blockchain**     | [Stellar SDK v16](https://www.npmjs.com/package/@stellar/stellar-sdk) |
+| **Smart Contract** | Soroban (Rust) — `soroban-sdk 22.0.6`                                 |
+| **Icons**          | [Lucide React](https://lucide.dev/)                                   |
+| **Network**        | Stellar Testnet                                                       |
 
 ---
 
@@ -76,7 +72,7 @@ The app supports **all major Stellar wallets** through [StellarWalletsKit](https
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/crowdlift.git
+git clone https://github.com/ianpurif/crowdlift.git
 cd crowdlift
 ```
 
@@ -126,13 +122,13 @@ The Soroban smart contract is located in [`contracts/crowdfund/src/lib.rs`](cont
 
 ### Contract Functions
 
-| Function             | Description                                          |
-|----------------------|------------------------------------------------------|
-| `initialize`         | Set admin, fundraising goal (stroops), and token address |
-| `donate`             | Transfer XLM from donor to admin, update totals, emit event |
-| `get_goal`           | Read the campaign funding goal                       |
-| `get_total_raised`   | Read total XLM raised on-chain                       |
-| `get_contribution`   | Read a specific donor's cumulative contribution      |
+| Function           | Description                                                 |
+| ------------------ | ----------------------------------------------------------- |
+| `initialize`       | Set admin, fundraising goal (stroops), and token address    |
+| `donate`           | Transfer XLM from donor to admin, update totals, emit event |
+| `get_goal`         | Read the campaign funding goal                              |
+| `get_total_raised` | Read total XLM raised on-chain                              |
+| `get_contribution` | Read a specific donor's cumulative contribution             |
 
 ### Build & Deploy the Contract
 
