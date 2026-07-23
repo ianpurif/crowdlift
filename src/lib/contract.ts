@@ -210,7 +210,7 @@ export async function fetchDonationEvents(
         {
           type: "contract",
           contractIds: [CONTRACT_ID],
-          topics: [[topicDonate, "*"]],
+          topics: [[topicDonate]],
         },
       ],
       limit: 20,

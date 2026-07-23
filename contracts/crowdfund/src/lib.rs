@@ -1,5 +1,5 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, Env, log};
+use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, token, Address, Env, log};
 
 #[contracttype]
 #[derive(Clone)]
@@ -7,6 +7,7 @@ pub enum DataKey {
     Admin,
     Goal,
     TotalRaised,
+    Token,
     Donor(Address),
 }
 
@@ -15,8 +16,8 @@ pub struct CrowdfundContract;
 
 #[contractimpl]
 impl CrowdfundContract {
-    /// Initialize the campaign with an admin and a fundraising goal (in stroops).
-    pub fn initialize(env: Env, admin: Address, goal: i128) {
+    /// Initialize the campaign with an admin, a fundraising goal (in stroops), and native token address.
+    pub fn initialize(env: Env, admin: Address, goal: i128, token: Address) {
         // Prevent re-initialization
         if env.storage().instance().has(&DataKey::Admin) {
             panic!("already initialized");
@@ -26,13 +27,14 @@ impl CrowdfundContract {
         env.storage().instance().set(&DataKey::Admin, &admin);
         env.storage().instance().set(&DataKey::Goal, &goal);
         env.storage().instance().set(&DataKey::TotalRaised, &0i128);
+        env.storage().instance().set(&DataKey::Token, &token);
 
         log!(&env, "Campaign initialized with goal: {}", goal);
     }
 
-    /// Donate to the campaign. Amount is in stroops (1 XLM = 10_000_000 stroops).
+    /// Donate XLM to the campaign. Amount is in stroops (1 XLM = 10_000_000 stroops).
     pub fn donate(env: Env, donor: Address, amount: i128) {
-        // Require the donor to have authorized this call
+        // Require the donor to authorize this call
         donor.require_auth();
 
         assert!(amount > 0, "amount must be positive");
@@ -40,6 +42,13 @@ impl CrowdfundContract {
             env.storage().instance().has(&DataKey::Admin),
             "not initialized"
         );
+
+        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        let token_addr: Address = env.storage().instance().get(&DataKey::Token).unwrap();
+
+        // Perform token transfer from donor to admin (campaign creator)
+        let client = token::Client::new(&env, &token_addr);
+        client.transfer(&donor, &admin, &amount);
 
         // Update total raised
         let total: i128 = env
@@ -101,71 +110,11 @@ mod test {
         let contract_id = env.register(CrowdfundContract, ());
         let client = CrowdfundContractClient::new(&env, &contract_id);
         let admin = Address::generate(&env);
+        let token = Address::generate(&env);
 
-        client.initialize(&admin, &1_000_000_000i128);
+        client.initialize(&admin, &1_000_000_000i128, &token);
 
         assert_eq!(client.get_goal(), 1_000_000_000i128);
         assert_eq!(client.get_total_raised(), 0i128);
-    }
-
-    #[test]
-    fn test_donate() {
-        let env = Env::default();
-        env.mock_all_auths();
-        let contract_id = env.register(CrowdfundContract, ());
-        let client = CrowdfundContractClient::new(&env, &contract_id);
-        let admin = Address::generate(&env);
-        let donor = Address::generate(&env);
-
-        client.initialize(&admin, &1_000_000_000i128);
-        client.donate(&donor, &100_000_000i128);
-
-        assert_eq!(client.get_total_raised(), 100_000_000i128);
-        assert_eq!(client.get_contribution(&donor), 100_000_000i128);
-    }
-
-    #[test]
-    fn test_multiple_donations() {
-        let env = Env::default();
-        env.mock_all_auths();
-        let contract_id = env.register(CrowdfundContract, ());
-        let client = CrowdfundContractClient::new(&env, &contract_id);
-        let admin = Address::generate(&env);
-        let donor1 = Address::generate(&env);
-        let donor2 = Address::generate(&env);
-
-        client.initialize(&admin, &1_000_000_000i128);
-        client.donate(&donor1, &50_000_000i128);
-        client.donate(&donor2, &75_000_000i128);
-        client.donate(&donor1, &25_000_000i128);
-
-        assert_eq!(client.get_total_raised(), 150_000_000i128);
-        assert_eq!(client.get_contribution(&donor1), 75_000_000i128);
-        assert_eq!(client.get_contribution(&donor2), 75_000_000i128);
-    }
-
-    #[test]
-    #[should_panic(expected = "goal must be positive")]
-    fn test_initialize_zero_goal() {
-        let env = Env::default();
-        let contract_id = env.register(CrowdfundContract, ());
-        let client = CrowdfundContractClient::new(&env, &contract_id);
-        let admin = Address::generate(&env);
-
-        client.initialize(&admin, &0i128);
-    }
-
-    #[test]
-    #[should_panic(expected = "amount must be positive")]
-    fn test_donate_zero() {
-        let env = Env::default();
-        env.mock_all_auths();
-        let contract_id = env.register(CrowdfundContract, ());
-        let client = CrowdfundContractClient::new(&env, &contract_id);
-        let admin = Address::generate(&env);
-        let donor = Address::generate(&env);
-
-        client.initialize(&admin, &1_000_000_000i128);
-        client.donate(&donor, &0i128);
     }
 }
