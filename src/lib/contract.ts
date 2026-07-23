@@ -202,13 +202,15 @@ export async function fetchDonationEvents(
     // Look back ~5 minutes worth of ledgers (roughly 60 ledgers)
     const from = startLedger || Math.max(1, currentLedger - 60);
 
+    const topicDonate = StellarSdk.xdr.ScVal.scvSymbol("donate").toXDR("base64");
+
     const eventsResponse = await server.getEvents({
       startLedger: from,
       filters: [
         {
           type: "contract",
           contractIds: [CONTRACT_ID],
-          topics: [["AAAADwAAAAZkb25hdGU=", "*"]],
+          topics: [[topicDonate, "*"]],
         },
       ],
       limit: 20,
