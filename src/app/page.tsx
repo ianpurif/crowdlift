@@ -16,35 +16,35 @@ import {
   fetchDonationEvents,
 } from "@/lib/contract";
 import { xlmToStroops, stroopsToXlm } from "@/lib/stellar";
-import { getKit } from "@/lib/wallet";
+import { initWalletKit } from "@/lib/wallet";
 import { StellarWalletsKit } from "@creit-tech/stellar-wallets-kit";
 import type { TransactionInfo, DonationEvent } from "@/types";
-import { Sparkles, ExternalLink } from "lucide-react";
+import { Rocket, ShieldCheck, HeartHandshake } from "lucide-react";
 
 const CAMPAIGN_TITLE = "CrowdLift Community Fund";
 const CAMPAIGN_DESCRIPTION =
-  "Help us build the future of decentralized community funding on Stellar. Every contribution brings us closer to empowering creators, innovators, and changemakers worldwide.";
+  "Empowering open-source innovation and community projects on Stellar Testnet. Donate XLM directly to our Soroban smart contract to help fund the next generation of decentralized tools.";
 
 export default function HomePage() {
   const { address, isConnected, refreshBalance } = useWallet();
 
-  // Campaign data
+  // Campaign state
   const [goal, setGoal] = useState(0);
   const [totalRaised, setTotalRaised] = useState(0);
   const [contribution, setContribution] = useState(0);
   const [isLoadingCampaign, setIsLoadingCampaign] = useState(true);
 
-  // Transaction
+  // Transaction state
   const [transaction, setTransaction] = useState<TransactionInfo>({
     state: "idle",
   });
 
-  // Events
+  // Donation events
   const [events, setEvents] = useState<DonationEvent[]>([]);
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
   const latestLedgerRef = useRef(0);
 
-  // Fetch campaign data
+  // Fetch contract campaign metrics
   const fetchCampaignData = useCallback(async () => {
     try {
       const [goalVal, raisedVal] = await Promise.all([
@@ -54,13 +54,13 @@ export default function HomePage() {
       setGoal(goalVal);
       setTotalRaised(raisedVal);
     } catch (error) {
-      console.error("Failed to fetch campaign data:", error);
+      console.error("Failed to read contract state:", error);
     } finally {
       setIsLoadingCampaign(false);
     }
   }, []);
 
-  // Fetch user contribution
+  // Fetch individual donor contribution
   const fetchContribution = useCallback(async () => {
     if (!address) {
       setContribution(0);
@@ -70,11 +70,11 @@ export default function HomePage() {
       const val = await getContribution(address);
       setContribution(val);
     } catch (error) {
-      console.error("Failed to fetch contribution:", error);
+      console.error("Failed to read user contribution:", error);
     }
   }, [address]);
 
-  // Fetch donation events
+  // Fetch contract donation events
   const fetchEvents = useCallback(async () => {
     try {
       const { events: newEvents, latestLedger } = await fetchDonationEvents(
@@ -88,7 +88,6 @@ export default function HomePage() {
           return [...unique, ...prev].slice(0, 50);
         });
 
-        // Also refresh campaign data when new events arrive
         fetchCampaignData();
       }
 
@@ -102,44 +101,45 @@ export default function HomePage() {
     }
   }, [fetchCampaignData]);
 
-  // Initial data load
+  // Initial load
   useEffect(() => {
     fetchCampaignData();
     fetchEvents();
   }, [fetchCampaignData, fetchEvents]);
 
-  // Fetch contribution when address changes
+  // Refresh contribution when address updates
   useEffect(() => {
     fetchContribution();
   }, [fetchContribution]);
 
-  // Poll for new events every 10 seconds
+  // Event polling loop (every 10 seconds)
   useEffect(() => {
     const interval = setInterval(fetchEvents, 10000);
     return () => clearInterval(interval);
   }, [fetchEvents]);
 
-  // Handle donation
+  // Main donation handler
   const handleDonate = async (amountXlm: number) => {
     if (!isConnected || !address) {
-      throw new Error("Wallet not connected");
+      throw new Error("Wallet is disconnected");
     }
 
     setTransaction({ state: "pending" });
 
     try {
-      // Build transaction
       const amountStroops = xlmToStroops(amountXlm);
+
+      // Build & simulate transaction with footprint
       const tx = await buildDonateTransaction(address, amountStroops);
 
-      // Sign with wallet (v2.5 static API)
-      getKit(); // ensure initialized
+      // Sign transaction using wallet extension
+      initWalletKit();
       const { signedTxXdr } = await StellarWalletsKit.signTransaction(tx.toXDR(), {
         networkPassphrase: "Test SDF Network ; September 2015",
         address,
       });
 
-      // Submit
+      // Submit to network
       const result = await submitTransaction(signedTxXdr);
 
       setTransaction({
@@ -147,7 +147,7 @@ export default function HomePage() {
         hash: result.hash,
       });
 
-      // Refresh data
+      // Synchronize state
       await Promise.all([
         fetchCampaignData(),
         fetchContribution(),
@@ -155,33 +155,32 @@ export default function HomePage() {
         refreshBalance(),
       ]);
     } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Transaction failed";
+      const rawMessage =
+        error instanceof Error ? error.message : String(error || "");
 
-      // Handle specific error types
-      let userMessage = errorMessage;
+      let userMessage = rawMessage;
 
       if (
-        errorMessage.toLowerCase().includes("reject") ||
-        errorMessage.toLowerCase().includes("cancel") ||
-        errorMessage.toLowerCase().includes("denied")
+        rawMessage.toLowerCase().includes("reject") ||
+        rawMessage.toLowerCase().includes("cancel") ||
+        rawMessage.toLowerCase().includes("denied")
       ) {
-        userMessage = "Transaction was rejected in your wallet.";
+        userMessage = "Transaction was cancelled in your wallet.";
       } else if (
-        errorMessage.toLowerCase().includes("insufficient") ||
-        errorMessage.toLowerCase().includes("underfunded")
+        rawMessage.toLowerCase().includes("insufficient") ||
+        rawMessage.toLowerCase().includes("underfunded")
       ) {
-        userMessage = "Insufficient XLM balance for this transaction.";
+        userMessage = "Insufficient XLM balance to complete transaction.";
       } else if (
-        errorMessage.toLowerCase().includes("simulation failed") ||
-        errorMessage.toLowerCase().includes("contract")
+        rawMessage.toLowerCase().includes("simulation failed") ||
+        rawMessage.toLowerCase().includes("contract")
       ) {
-        userMessage = "Contract error: " + errorMessage;
+        userMessage = `Contract call failed: ${rawMessage}`;
       } else if (
-        errorMessage.toLowerCase().includes("network") ||
-        errorMessage.toLowerCase().includes("timeout")
+        rawMessage.toLowerCase().includes("network") ||
+        rawMessage.toLowerCase().includes("timeout")
       ) {
-        userMessage = "Network error. Please check your connection and try again.";
+        userMessage = "Network timeout. Please check Stellar Testnet status.";
       }
 
       setTransaction({
@@ -192,26 +191,32 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg">
-      {/* Header */}
-      <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4 sm:px-6">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent">
-              <Sparkles size={16} className="text-white" />
+    <div className="min-h-screen bg-bg text-text-primary selection:bg-accent-light selection:text-accent">
+      {/* Navigation Header */}
+      <header className="sticky top-0 z-40 border-b border-border/80 bg-card/90 backdrop-blur-md">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3.5 sm:px-6">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-white shadow-sm">
+              <Rocket size={18} />
             </div>
-            <span className="text-lg font-bold text-text-primary">
-              CrowdLift
-            </span>
+            <div>
+              <span className="text-lg font-bold text-text-primary tracking-tight">
+                CrowdLift
+              </span>
+              <span className="ml-2 text-[10px] font-bold text-accent bg-accent-light px-2 py-0.5 rounded-full uppercase tracking-wide">
+                Testnet
+              </span>
+            </div>
           </div>
+
           <WalletButton />
         </div>
       </header>
 
-      {/* Main content */}
+      {/* Main Content Area */}
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         <div className="grid gap-6 lg:grid-cols-5">
-          {/* Left column: Campaign + Donation */}
+          {/* Main Campaign Column */}
           <div className="space-y-6 lg:col-span-3">
             <CampaignCard
               title={CAMPAIGN_TITLE}
@@ -221,24 +226,36 @@ export default function HomePage() {
               isLoading={isLoadingCampaign}
             />
 
-            {/* Your contribution */}
+            {/* Donor Contribution Highlight */}
             {isConnected && contribution > 0 && (
-              <div className="rounded-2xl border border-accent-light bg-accent-light/30 px-5 py-4">
-                <p className="text-sm text-text-secondary">
-                  Your total contribution
-                </p>
-                <p className="text-lg font-bold text-accent">
-                  {stroopsToXlm(contribution).toFixed(2)} XLM
-                </p>
+              <div className="rounded-2xl border border-accent/20 bg-accent-light/40 p-5 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-accent">
+                    <HeartHandshake size={16} />
+                    <span>Your Contributions</span>
+                  </div>
+                  <span className="text-xs font-bold text-accent bg-card px-2.5 py-1 rounded-full border border-accent/20">
+                    Donor Verified
+                  </span>
+                </div>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-text-primary">
+                    {stroopsToXlm(contribution).toFixed(2)}
+                  </span>
+                  <span className="text-xs font-semibold text-text-secondary">
+                    XLM Contributed
+                  </span>
+                </div>
               </div>
             )}
 
+            {/* Donation Form */}
             <DonationForm
               onDonate={handleDonate}
               isPending={transaction.state === "pending"}
             />
 
-            {/* Transaction status */}
+            {/* Transaction Alert Feedback */}
             {transaction.state !== "idle" && (
               <TransactionStatus
                 transaction={transaction}
@@ -247,7 +264,7 @@ export default function HomePage() {
             )}
           </div>
 
-          {/* Right column: Activity */}
+          {/* Activity Feed Column */}
           <div className="lg:col-span-2">
             <ActivityFeed events={events} isLoading={isLoadingEvents} />
           </div>
@@ -255,28 +272,31 @@ export default function HomePage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-card mt-16">
+      <footer className="mt-16 border-t border-border bg-card">
         <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
-          <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-            <p className="text-xs text-text-secondary">
-              Built on Stellar Testnet. This is a demo application.
-            </p>
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col items-center justify-between gap-3 text-xs text-text-secondary sm:flex-row">
+            <div className="flex items-center gap-1.5">
+              <ShieldCheck size={14} className="text-success" />
+              <span>
+                Powered by Soroban Smart Contracts on Stellar Testnet
+              </span>
+            </div>
+            <div className="flex items-center gap-4 font-medium">
               <a
                 href="https://stellar.expert/explorer/testnet"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-text-secondary hover:text-accent transition-colors"
+                className="hover:text-accent transition-colors"
               >
                 Stellar Expert
               </a>
               <a
-                href="https://github.com"
+                href="https://soroban.stellar.org"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-text-secondary hover:text-accent transition-colors"
+                className="hover:text-accent transition-colors"
               >
-                <ExternalLink size={16} />
+                Soroban Docs
               </a>
             </div>
           </div>

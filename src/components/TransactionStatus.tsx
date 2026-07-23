@@ -28,65 +28,74 @@ export default function TransactionStatus({
 
   return (
     <div
-      className={`animate-fade-in rounded-2xl border p-5 shadow-sm ${
+      className={`animate-fade-in rounded-2xl border p-5 shadow-sm transition-all ${
         isPending
-          ? "border-accent-light bg-accent-light/30"
+          ? "border-accent/30 bg-accent-light/40"
           : isSuccess
-            ? "border-success-light bg-success-light/50"
-            : "border-error-light bg-error-light/50"
+            ? "border-success/30 bg-success-light/60"
+            : "border-error/30 bg-error-light/60"
       }`}
     >
-      <div className="flex items-start justify-between">
-        <div className="flex items-start gap-3">
-          {/* Icon */}
-          {isPending && (
-            <Loader2
-              size={20}
-              className="mt-0.5 animate-spin text-accent"
-            />
-          )}
-          {isSuccess && (
-            <CheckCircle2 size={20} className="mt-0.5 text-success" />
-          )}
-          {isFailed && (
-            <XCircle size={20} className="mt-0.5 text-error" />
-          )}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3.5">
+          {/* Status Icon */}
+          <div className="mt-0.5 shrink-0">
+            {isPending && (
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent/10 text-accent">
+                <Loader2 size={20} className="animate-spin" />
+              </div>
+            )}
+            {isSuccess && (
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-success/10 text-success">
+                <CheckCircle2 size={20} />
+              </div>
+            )}
+            {isFailed && (
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-error/10 text-error">
+                <XCircle size={20} />
+              </div>
+            )}
+          </div>
 
-          {/* Content */}
+          {/* Details */}
           <div>
-            <p className="text-sm font-semibold text-text-primary">
+            <h4 className="text-sm font-bold text-text-primary">
               {isPending && "Transaction Pending"}
-              {isSuccess && "Donation Successful"}
+              {isSuccess && "Donation Successful!"}
               {isFailed && "Transaction Failed"}
-            </p>
-            <p className="mt-0.5 text-xs text-text-secondary">
+            </h4>
+            <p className="mt-1 text-xs text-text-secondary leading-relaxed">
               {isPending &&
-                "Your donation is being processed on the Stellar network…"}
-              {isSuccess && "Thank you for your contribution!"}
+                "Your donation transaction is being simulated and submitted to Stellar Testnet…"}
+              {isSuccess &&
+                "Your XLM donation has been confirmed on-chain by the Soroban smart contract."}
               {isFailed &&
-                (transaction.error || "Something went wrong. Please try again.")}
+                (transaction.error ||
+                  "The transaction could not be completed. Please try again.")}
             </p>
 
-            {/* Transaction hash link */}
+            {/* Explorer link */}
             {transaction.hash && (
-              <a
-                href={getStellarExpertTxUrl(transaction.hash)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:underline"
-              >
-                View on Stellar Expert
-                <ExternalLink size={12} />
-              </a>
+              <div className="mt-3">
+                <a
+                  href={getStellarExpertTxUrl(transaction.hash)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-card border border-border px-3 py-1.5 text-xs font-semibold text-accent transition-colors hover:border-accent"
+                >
+                  <span>View on Stellar Expert Explorer</span>
+                  <ExternalLink size={12} />
+                </a>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Dismiss */}
+        {/* Dismiss Button */}
         {!isPending && (
           <button
             onClick={onDismiss}
-            className="rounded-lg p-1 text-text-secondary transition-colors hover:bg-bg hover:text-text-primary"
+            className="rounded-lg p-1 text-text-secondary transition-colors hover:bg-card hover:text-text-primary"
           >
             <X size={16} />
           </button>

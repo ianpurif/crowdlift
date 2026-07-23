@@ -9,7 +9,7 @@ import React, {
   type ReactNode,
 } from "react";
 import { StellarWalletsKit } from "@creit-tech/stellar-wallets-kit";
-import { getKit, getAvailableWallets, resetWalletKit } from "@/lib/wallet";
+import { initWalletKit, getAvailableWallets } from "@/lib/wallet";
 import { fetchXlmBalance } from "@/lib/stellar";
 
 interface WalletContextType {
@@ -23,6 +23,7 @@ interface WalletContextType {
   disconnect: () => void;
   switchWallet: (walletId: string) => Promise<void>;
   refreshBalance: () => Promise<void>;
+  clearError: () => void;
   availableWallets: { id: string; name: string }[];
 }
 
@@ -38,13 +39,17 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const availableWallets = getAvailableWallets();
 
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
   const refreshBalance = useCallback(async () => {
     if (!address) return;
     try {
       const bal = await fetchXlmBalance(address);
       setBalance(bal);
     } catch (err) {
-      console.error("Failed to refresh balance:", err);
+      console.error("Failed to fetch balance:", err);
     }
   }, [address]);
 
@@ -53,71 +58,64 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setError(null);
 
     try {
-      // Ensure kit is initialized
-      const Kit = getKit();
+      const Kit = initWalletKit();
 
-      // fetchAddress connects to the wallet and retrieves the address
-      const { address: addr } = await Kit.fetchAddress();
+      // Open authentication modal for wallet selection & connection
+      const res = await Kit.authModal();
 
-      if (!addr) {
-        throw new Error("No address returned from wallet");
-      }
+      if (res && res.address) {
+        setAddress(res.address);
+        setIsConnected(true);
 
-      setAddress(addr);
-      setIsConnected(true);
-
-      // Determine wallet name
-      const wallet = availableWallets.find((w) => {
+        let activeName = "Wallet";
         try {
-          return Kit.selectedModule.productId === w.id;
+          const mod = Kit.selectedModule;
+          if (mod) {
+            const found = availableWallets.find((w) => w.id === mod.productId);
+            activeName = found?.name || mod.productName || "Wallet";
+          }
         } catch {
-          return false;
+          // Default
         }
-      });
-      setWalletName(wallet?.name || "Wallet");
+        setWalletName(activeName);
 
-      // Fetch balance
-      const bal = await fetchXlmBalance(addr);
-      setBalance(bal);
+        const bal = await fetchXlmBalance(res.address);
+        setBalance(bal);
+      }
     } catch (err: unknown) {
-      const errorMessage =
+      const rawMessage =
         err instanceof Error
           ? err.message
           : typeof err === "object" && err !== null && "message" in err
             ? String((err as { message: unknown }).message)
-            : "Failed to connect wallet";
+            : String(err || "");
 
+      // Handle user cancellation gracefully
       if (
-        errorMessage.toLowerCase().includes("user") &&
-        (errorMessage.toLowerCase().includes("reject") ||
-          errorMessage.toLowerCase().includes("cancel") ||
-          errorMessage.toLowerCase().includes("denied"))
+        rawMessage.includes("closed the modal") ||
+        rawMessage.includes("User closed")
       ) {
-        setError("Connection rejected. Please approve the connection in your wallet.");
+        setError(null);
       } else if (
-        errorMessage.toLowerCase().includes("not installed") ||
-        errorMessage.toLowerCase().includes("not available") ||
-        errorMessage.toLowerCase().includes("not found") ||
-        errorMessage.toLowerCase().includes("not connected") ||
-        errorMessage.toLowerCase().includes("cannot find")
+        rawMessage.toLowerCase().includes("reject") ||
+        rawMessage.toLowerCase().includes("denied") ||
+        rawMessage.toLowerCase().includes("cancel")
+      ) {
+        setError("Wallet connection rejected by user.");
+      } else if (
+        rawMessage.toLowerCase().includes("not installed") ||
+        rawMessage.toLowerCase().includes("not connected") ||
+        rawMessage.toLowerCase().includes("not available") ||
+        rawMessage.toLowerCase().includes("not found")
       ) {
         setError(
-          "Wallet not found. Please install the wallet extension and refresh the page."
-        );
-      } else if (
-        errorMessage.toLowerCase().includes("set the wallet first") ||
-        errorMessage.toLowerCase().includes("no wallet")
-      ) {
-        setError(
-          "No wallet selected. Please install Freighter or xBull wallet extension."
+          "Selected wallet extension was not found. Please install Freighter or xBull wallet extension."
         );
       } else {
-        setError(errorMessage);
+        setError(rawMessage || "Failed to connect wallet.");
       }
 
       setIsConnected(false);
-      setAddress("");
-      setBalance("0");
     } finally {
       setIsConnecting(false);
     }
@@ -127,27 +125,27 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     try {
       StellarWalletsKit.disconnect();
     } catch {
-      // Ignore disconnect errors
+      // Ignore
     }
     setAddress("");
     setBalance("0");
     setIsConnected(false);
     setWalletName("");
     setError(null);
-    resetWalletKit();
   }, []);
 
   const switchWallet = useCallback(
     async (walletId: string) => {
+      setIsConnecting(true);
       setError(null);
+
       try {
-        const Kit = getKit();
+        const Kit = initWalletKit();
         Kit.setWallet(walletId);
 
         const wallet = availableWallets.find((w) => w.id === walletId);
         setWalletName(wallet?.name || "Wallet");
 
-        // Reconnect with new wallet
         const { address: addr } = await Kit.fetchAddress();
         if (addr) {
           setAddress(addr);
@@ -156,22 +154,43 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           setBalance(bal);
         }
       } catch (err: unknown) {
-        const errorMessage =
+        const rawMessage =
           err instanceof Error
             ? err.message
             : typeof err === "object" && err !== null && "message" in err
               ? String((err as { message: unknown }).message)
-              : "Failed to switch wallet";
-        setError(errorMessage);
+              : String(err || "");
+
+        const targetName = walletId === "freighter" ? "Freighter" : "xBull";
+
+        if (
+          rawMessage.toLowerCase().includes("not installed") ||
+          rawMessage.toLowerCase().includes("not connected") ||
+          rawMessage.toLowerCase().includes("not available") ||
+          rawMessage.toLowerCase().includes("not found")
+        ) {
+          setError(
+            `${targetName} wallet extension is not installed or unavailable. Please install ${targetName} extension.`
+          );
+        } else if (
+          rawMessage.toLowerCase().includes("reject") ||
+          rawMessage.toLowerCase().includes("denied")
+        ) {
+          setError(`Connection to ${targetName} rejected by user.`);
+        } else {
+          setError(rawMessage || `Failed to switch to ${targetName}.`);
+        }
+      } finally {
+        setIsConnecting(false);
       }
     },
     [availableWallets]
   );
 
-  // Refresh balance periodically when connected
+  // Periodically refresh balance
   useEffect(() => {
     if (!isConnected || !address) return;
-    const interval = setInterval(refreshBalance, 30000);
+    const interval = setInterval(refreshBalance, 20000);
     return () => clearInterval(interval);
   }, [isConnected, address, refreshBalance]);
 
@@ -188,6 +207,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         disconnect,
         switchWallet,
         refreshBalance,
+        clearError,
         availableWallets,
       }}
     >

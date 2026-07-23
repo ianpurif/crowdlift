@@ -11,42 +11,26 @@ let initialized = false;
 
 /**
  * Initialize StellarWalletsKit with Freighter and xBull modules.
- * Uses the v2.5 static API.
  */
-export function initWalletKit(): void {
-  if (initialized) return;
-
-  StellarWalletsKit.init({
-    network: Networks.TESTNET,
-    modules: [new FreighterModule(), new xBullModule()],
-  });
-
-  initialized = true;
-}
-
-/**
- * Get the StellarWalletsKit static class (ensures initialization first).
- */
-export function getKit(): typeof StellarWalletsKit {
-  initWalletKit();
+export function initWalletKit(): typeof StellarWalletsKit {
+  if (!initialized) {
+    StellarWalletsKit.init({
+      network: Networks.TESTNET,
+      modules: [new FreighterModule(), new xBullModule()],
+    });
+    initialized = true;
+  }
   return StellarWalletsKit;
 }
 
 /**
- * Get list of available wallet module IDs and names.
+ * Get list of available wallet options.
  */
 export function getAvailableWallets(): { id: string; name: string }[] {
   return [
     { id: FREIGHTER_ID, name: "Freighter" },
     { id: XBULL_ID, name: "xBull" },
   ];
-}
-
-/**
- * Reset initialization state (for disconnect/reconnect).
- */
-export function resetWalletKit(): void {
-  initialized = false;
 }
 
 export { FREIGHTER_ID, XBULL_ID };
