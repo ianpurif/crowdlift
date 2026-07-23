@@ -26,27 +26,32 @@ export default function DonationForm({ onDonate, isPending }: DonationFormProps)
       return;
     }
 
+    if (!amount || amount.trim() === "") {
+      setError("Please enter the amount of XLM you wish to donate.");
+      return;
+    }
+
     const numAmount = parseFloat(amount);
 
-    if (!amount || isNaN(numAmount)) {
-      setError("Please enter a valid donation amount in XLM.");
+    if (isNaN(numAmount)) {
+      setError("Please enter a valid numeric XLM amount.");
       return;
     }
 
     if (numAmount <= 0) {
-      setError("Donation amount must be greater than zero.");
+      setError("Donation amount must be greater than 0 XLM.");
       return;
     }
 
     if (numAmount < 0.0000001) {
-      setError("Minimum donation amount is 0.0000001 XLM.");
+      setError("Minimum donation amount is 0.0000001 XLM (1 stroop).");
       return;
     }
 
     const balanceNum = parseFloat(balance || "0");
     if (balanceNum > 0 && numAmount > balanceNum - 0.5) {
       setError(
-        `Insufficient XLM balance. Available: ${balanceNum.toFixed(2)} XLM (0.5 XLM reserved for base reserve & network fees).`
+        `Insufficient XLM balance. Available: ${balanceNum.toFixed(2)} XLM. Please keep at least 0.5 XLM reserved for Stellar transaction fees and base account reserve.`
       );
       return;
     }
@@ -55,7 +60,7 @@ export default function DonationForm({ onDonate, isPending }: DonationFormProps)
       await onDonate(numAmount);
       setAmount("");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Donation transaction failed";
+      const msg = err instanceof Error ? err.message : "Donation transaction failed.";
       setError(msg);
     }
   };
@@ -121,7 +126,7 @@ export default function DonationForm({ onDonate, isPending }: DonationFormProps)
           </div>
         )}
 
-        {/* Main Action Button */}
+        {/* Primary Action Button */}
         <button
           type="submit"
           disabled={isPending}

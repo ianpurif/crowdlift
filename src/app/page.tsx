@@ -169,22 +169,23 @@ export default function HomePage() {
         rawMessage.toLowerCase().includes("cancel") ||
         rawMessage.toLowerCase().includes("denied")
       ) {
-        userMessage = "Transaction was cancelled by user.";
+        userMessage = "Transaction cancelled. You declined the signature request in your wallet extension.";
       } else if (
         rawMessage.toLowerCase().includes("insufficient") ||
         rawMessage.toLowerCase().includes("underfunded")
       ) {
-        userMessage = "Insufficient XLM balance to complete transaction.";
+        userMessage = "Transaction failed. Insufficient XLM balance in your wallet to cover the donation and Stellar transaction fees.";
       } else if (
         rawMessage.toLowerCase().includes("simulation failed") ||
         rawMessage.toLowerCase().includes("contract")
       ) {
-        userMessage = `Contract error: ${rawMessage}`;
+        userMessage = `Soroban Contract Error: ${rawMessage.replace(/^Error:\s*/i, "")}`;
       } else if (
         rawMessage.toLowerCase().includes("network") ||
-        rawMessage.toLowerCase().includes("timeout")
+        rawMessage.toLowerCase().includes("timeout") ||
+        rawMessage.toLowerCase().includes("fetch")
       ) {
-        userMessage = "Network timeout. Please check your Stellar Testnet connection.";
+        userMessage = "Network Connection Issue: Unable to reach Stellar Testnet RPC. Please check your internet connection.";
       }
 
       setTransaction({

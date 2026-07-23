@@ -28,9 +28,7 @@ export default function CampaignCard({
     <div className="apple-card p-6 sm:p-10 animate-fade-in-up">
       {/* Badge */}
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-[#64748B]">
-          Stellar Testnet
-        </span>
+        <span className="text-xs font-medium text-[#64748B]">Stellar</span>
       </div>
 
       {/* Main Campaign Info */}
