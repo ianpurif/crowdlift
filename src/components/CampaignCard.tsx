@@ -21,16 +21,13 @@ export default function CampaignCard({
 }: CampaignCardProps) {
   const goalXlm = stroopsToXlm(goalStroops);
   const raisedXlm = stroopsToXlm(totalRaisedStroops);
-  const percentage = goalXlm > 0 ? Math.min((raisedXlm / goalXlm) * 100, 100) : 0;
+  const percentage =
+    goalXlm > 0 ? Math.min((raisedXlm / goalXlm) * 100, 100) : 0;
 
   return (
     <div className="apple-card p-6 sm:p-10 animate-fade-in-up">
       {/* Badge */}
       <div className="flex items-center justify-between">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#2563EB]/10 px-3 py-1 text-xs font-semibold text-[#2563EB] tracking-wide uppercase">
-          <Sparkles size={13} />
-          Soroban Campaign
-        </span>
         <span className="text-xs font-medium text-[#64748B]">
           Stellar Testnet
         </span>
@@ -95,7 +92,9 @@ export default function CampaignCard({
               <TrendingUp size={18} />
             </div>
             <div>
-              <div className="text-xs text-[#64748B] font-medium">Raised So Far</div>
+              <div className="text-xs text-[#64748B] font-medium">
+                Raised So Far
+              </div>
               <div className="text-sm font-bold text-[#0F172A]">
                 {isLoading ? "..." : `${raisedXlm.toFixed(2)} XLM`}
               </div>
@@ -107,7 +106,9 @@ export default function CampaignCard({
               <Target size={18} />
             </div>
             <div>
-              <div className="text-xs text-[#64748B] font-medium">Target Goal</div>
+              <div className="text-xs text-[#64748B] font-medium">
+                Target Goal
+              </div>
               <div className="text-sm font-bold text-[#0F172A]">
                 {isLoading ? "..." : `${goalXlm.toFixed(0)} XLM`}
               </div>
