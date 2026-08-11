@@ -9,18 +9,18 @@ import DonationForm from "@/components/DonationForm";
 import TransactionStatus from "@/components/TransactionStatus";
 import { useToast } from "@/contexts/ToastContext";
 import { useWallet } from "@/contexts/WalletContext";
-import { buildDonateTransaction, fetchDonationEvents, getContribution, getLegacyCampaign, submitTransaction } from "@/lib/contract";
-import { buildRegistryContributionTransaction, getRegistryCampaign, getRegistryContribution } from "@/lib/registry";
+import { buildDonateTransaction, fetchLegacyCampaignActivity, getContribution, getLegacyCampaign, submitTransaction } from "@/lib/contract";
+import { buildRegistryContributionTransaction, getRegistryCampaign, getRegistryCampaignActivity, getRegistryContribution } from "@/lib/registry";
 import { signContractTransaction } from "@/lib/wallet";
 import { xlmToStroops } from "@/lib/stellar";
-import type { CampaignRecord, DonationEvent, TransactionInfo } from "@/types";
+import type { CampaignActivity, CampaignRecord, TransactionInfo } from "@/types";
 
 export default function CampaignDetailClient({ campaignId }: { campaignId: string }) {
   const { address, isConnected, refreshBalance } = useWallet();
   const { toast, dismissToast } = useToast();
   const [campaign, setCampaign] = useState<CampaignRecord | null>(null);
   const [contribution, setContribution] = useState(0);
-  const [events, setEvents] = useState<DonationEvent[]>([]);
+  const [events, setEvents] = useState<CampaignActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [transaction, setTransaction] = useState<TransactionInfo>({ state: "idle" });
@@ -37,10 +37,10 @@ export default function CampaignDetailClient({ campaignId }: { campaignId: strin
       setCampaign(record);
       if (address) setContribution(isLegacy ? await getContribution(address) : await getRegistryContribution(registryId, address));
       else setContribution(0);
-      if (isLegacy) {
-        const activity = await fetchDonationEvents();
-        setEvents(activity.events);
-      } else setEvents([]);
+      const activity = isLegacy
+        ? (await fetchLegacyCampaignActivity()).events
+        : await getRegistryCampaignActivity(registryId, record.createdLedger);
+      setEvents(activity);
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Campaign could not be loaded."); }
     finally { setLoading(false); }
   }, [address, isLegacy, registryId]);
@@ -76,7 +76,7 @@ export default function CampaignDetailClient({ campaignId }: { campaignId: strin
     <main className="shell route-main campaign-detail-route">
       <Link className="route-back" href="/campaigns"><ArrowLeft size={14} /> All campaigns</Link>
       <div className="campaign-layout"><div className="campaign-primary"><CampaignCard campaign={campaign} /><TransactionStatus transaction={transaction} onDismiss={() => setTransaction({ state: "idle" })} />{contribution > 0 && <div className="supporter-record"><div><span>Your recorded support</span><strong>{(contribution / 10_000_000).toFixed(2)} XLM</strong></div><small>Linked to this wallet</small></div>}</div><DonationForm onDonate={donate} isPending={transaction.state === "pending"} /></div>
-      {isLegacy && <ActivityFeed events={events} isLoading={false} hasRecordedFunding={campaign.raised > 0} />}
+      <ActivityFeed events={events} isLoading={false} hasRecordedFunding={campaign.raised > 0} />
     </main>
   );
 }

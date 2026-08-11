@@ -2,7 +2,7 @@
 
 import * as StellarSdk from "@stellar/stellar-sdk";
 import { getNetworkPassphrase, getSorobanServer } from "@/lib/stellar";
-import type { CampaignDraft, CampaignRecord } from "@/types";
+import type { CampaignActivity, CampaignDraft, CampaignRecord } from "@/types";
 
 const REGISTRY_ID =
   process.env.NEXT_PUBLIC_CAMPAIGN_REGISTRY_ID ||
@@ -108,6 +108,82 @@ export async function getRegistryContribution(id: number, donor: string): Promis
     StellarSdk.nativeToScVal(id, { type: "u64" }),
     new StellarSdk.Address(donor).toScVal(),
   ));
+}
+
+export async function getRegistryCampaignActivity(
+  campaignId: number,
+  createdLedger?: number,
+): Promise<CampaignActivity[]> {
+  if (!isCampaignRegistryConfigured()) return [];
+  const server = getSorobanServer();
+
+  try {
+    const idTopic = StellarSdk.nativeToScVal(campaignId, { type: "u64" }).toXDR("base64");
+    const eventSymbol = (name: string) => StellarSdk.xdr.ScVal.scvSymbol(name).toXDR("base64");
+    const filters: StellarSdk.rpc.Api.EventFilter[] = [{
+      type: "contract",
+      contractIds: [REGISTRY_ID],
+      topics: [
+        [eventSymbol("created"), "*", idTopic],
+        [eventSymbol("updated"), "*", idTopic],
+        [eventSymbol("status"), "*", idTopic],
+        [eventSymbol("funded"), idTopic, "*"],
+      ],
+    }];
+    const latest = await server.getLatestLedger();
+    const retention = await server.getEvents({
+      startLedger: latest.sequence,
+      filters,
+      limit: 1,
+    });
+    const startLedger = Math.max(retention.oldestLedger, createdLedger || retention.oldestLedger);
+    const response = await server.getEvents({
+      startLedger,
+      filters,
+      limit: 200,
+    });
+
+    return response.events
+      .filter((event) => event.inSuccessfulContractCall)
+      .flatMap((event): CampaignActivity[] => {
+        try {
+          const topics = event.topic.map((topic) => StellarSdk.scValToNative(topic));
+          const eventType = String(topics[0]);
+          const isContribution = eventType === "funded";
+          const eventCampaignId = Number(topics[isContribution ? 1 : 2]);
+          if (eventCampaignId !== campaignId) return [];
+
+          const actor = address(topics[isContribution ? 2 : 1] as StellarSdk.Address | string);
+          const nativeValue = StellarSdk.scValToNative(event.value);
+          const common = {
+            id: event.id,
+            actor,
+            timestamp: new Date(event.ledgerClosedAt).getTime(),
+            ledger: event.ledger,
+            txHash: event.txHash,
+          };
+
+          if (eventType === "created") return [{ ...common, type: "created" }];
+          if (eventType === "updated") return [{ ...common, type: "updated" }];
+          if (eventType === "status") return [{ ...common, type: "status", active: Boolean(nativeValue) }];
+          if (eventType === "funded" && Array.isArray(nativeValue)) {
+            return [{
+              ...common,
+              type: "contribution",
+              amount: Number(nativeValue[0]),
+              totalRaised: Number(nativeValue[1]),
+            }];
+          }
+        } catch {
+          return [];
+        }
+        return [];
+      })
+      .sort((a, b) => b.timestamp - a.timestamp);
+  } catch (error) {
+    console.debug("Campaign activity is temporarily unavailable:", error);
+    return [];
+  }
 }
 
 export function buildCreateCampaignTransaction(creator: string, draft: CampaignDraft) {

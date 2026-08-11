@@ -42,13 +42,18 @@ export interface TransactionInfo {
   error?: string;
 }
 
-export interface DonationEvent {
+export type CampaignActivityType = "created" | "updated" | "status" | "contribution";
+
+export interface CampaignActivity {
   id: string;
-  donor: string;
-  amount: number;
-  totalRaised: number;
+  type: CampaignActivityType;
+  actor: string;
+  amount?: number;
+  totalRaised?: number;
+  active?: boolean;
   timestamp: number;
-  txHash?: string;
+  ledger: number;
+  txHash: string;
 }
 
 export interface ContractError {

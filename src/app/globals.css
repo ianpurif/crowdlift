@@ -200,15 +200,16 @@ a { color: inherit; text-decoration: none; }
 .activity-heading h2 { margin: 8px 0 0; font-size: 34px; letter-spacing: -.045em; }
 .sync-status { display: inline-flex; align-items: center; gap: 6px; color: var(--success); font-size: 10px; font-weight: 750; text-transform: uppercase; letter-spacing: .07em; }
 .activity-table { overflow-x: auto; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--line); background: var(--white); }
-.activity-row { min-width: 720px; min-height: 62px; display: grid; grid-template-columns: 1.35fr 1fr .8fr .75fr 28px; align-items: center; gap: 18px; padding: 0 18px; border-bottom: 1px solid var(--line); color: var(--ink-soft); font-size: 11px; }
+.activity-row { min-width: 820px; min-height: 66px; display: grid; grid-template-columns: 1.35fr 1fr 1fr .85fr 76px; align-items: center; gap: 18px; padding: 0 18px; border-bottom: 1px solid var(--line); color: var(--ink-soft); font-size: 11px; }
 .activity-row:last-child { border-bottom: 0; }
 .activity-header { min-height: 40px; color: var(--ink-soft); background: var(--paper-deep); font-size: 9px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
 .activity-row > strong { color: var(--ink); text-align: right; }
-.activity-row > a { display: grid; place-items: center; color: var(--success); }
+.activity-row > a { display: inline-flex; align-items: center; justify-content: flex-end; gap: 4px; color: var(--success); font-weight: 800; }
+.activity-kind { display: flex; align-items: center; gap: 10px; color: var(--ink); }
+.activity-kind i { width: 30px; height: 30px; display: grid; place-items: center; flex: 0 0 auto; background: var(--paper-deep); color: var(--success); font-style: normal; }
+.activity-kind strong { font-size: 11px; }
+.activity-verify:hover { text-decoration: underline; }
 .supporter-address { display: flex; align-items: center; gap: 10px; color: var(--ink); font-family: ui-monospace, monospace; font-weight: 700; }
-.supporter-address i { width: 28px; height: 28px; display: grid; place-items: center; background: var(--paper-deep); color: var(--success); font-family: Inter, sans-serif; font-size: 9px; font-style: normal; text-transform: uppercase; }
-.confirmed-status { display: flex; align-items: center; gap: 6px; color: var(--success); font-weight: 700; }
-.confirmed-status i { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
 .activity-skeleton { grid-column: 1 / -1; height: 20px; display: block; }
 .activity-empty { padding: 48px 24px; text-align: center; }
 .activity-empty strong { font-size: 13px; }

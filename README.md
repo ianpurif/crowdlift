@@ -7,7 +7,7 @@ CrowdLift is wallet-owned crowdfunding on Stellar. Creators publish campaigns wi
 - `/` — product introduction
 - `/campaigns` — public campaign discovery
 - `/campaigns/new` — wallet-authorized campaign creation
-- `/campaigns/[id]` — campaign details and contributions
+- `/campaigns/[id]` — campaign details, contributions, and blockchain-verifiable activity history
 - `/dashboard` — campaigns associated with the connected wallet
 - `/dashboard/campaigns/[id]` — owner-only campaign editing and status controls
 

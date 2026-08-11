@@ -2,7 +2,7 @@
 
 import * as StellarSdk from "@stellar/stellar-sdk";
 import { getSorobanServer, getNetworkPassphrase } from "./stellar";
-import type { CampaignRecord, DonationEvent } from "@/types";
+import type { CampaignActivity, CampaignRecord } from "@/types";
 
 const CONTRACT_ID = process.env.NEXT_PUBLIC_CONTRACT_ID || "";
 
@@ -211,9 +211,9 @@ export async function submitTransaction(
 /**
  * Fetch recent donation events from the contract.
  */
-export async function fetchDonationEvents(
+export async function fetchLegacyCampaignActivity(
   startLedger?: number
-): Promise<{ events: DonationEvent[]; latestLedger: number }> {
+): Promise<{ events: CampaignActivity[]; latestLedger: number }> {
   if (!CONTRACT_ID) return { events: [], latestLedger: 0 };
 
   const server = getSorobanServer();
@@ -239,7 +239,7 @@ export async function fetchDonationEvents(
       limit: 50,
     });
 
-    const events: DonationEvent[] = (eventsResponse.events || []).map(
+    const events: CampaignActivity[] = (eventsResponse.events || []).map(
       (event, index) => {
         let donor = "Unknown";
         let amount = 0;
@@ -264,10 +264,12 @@ export async function fetchDonationEvents(
 
         return {
           id: event.id || `event-${index}-${Date.now()}`,
-          donor,
+          type: "contribution",
+          actor: donor,
           amount,
           totalRaised,
           timestamp,
+          ledger: event.ledger,
           txHash: event.txHash,
         };
       }
