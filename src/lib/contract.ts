@@ -255,7 +255,7 @@ export async function fetchDonationEvents(
 
     return { events, latestLedger: currentLedger };
   } catch (error) {
-    console.error("Failed to fetch events:", error);
+    console.debug("Donation event window unavailable:", error);
     return { events: [], latestLedger: startLedger || 0 };
   }
 }

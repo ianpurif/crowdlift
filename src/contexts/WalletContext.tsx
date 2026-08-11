@@ -6,6 +6,7 @@ import React, {
   useState,
   useCallback,
   useEffect,
+  useMemo,
   type ReactNode,
 } from "react";
 import { StellarWalletsKit } from "@creit-tech/stellar-wallets-kit";
@@ -40,7 +41,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const availableWallets = getAvailableWallets();
+  const availableWallets = useMemo(() => getAvailableWallets(), []);
 
   const clearError = useCallback(() => {
     setError(null);

@@ -18,7 +18,7 @@ export default function LandingExperience({ goalStroops, totalRaisedStroops, isL
         <div className="shell hero-grid">
           <div className="hero-copy">
             <p className="eyebrow">Community capital, made visible</p>
-            <h1 id="hero-title">Give good ideas<br />the lift they need.</h1>
+            <h1 id="hero-title">Give good ideas <br />the lift they need.</h1>
             <p className="hero-deck">
               CrowdLift helps communities fund meaningful work with wallet-signed contributions and a public record on Stellar.
             </p>

@@ -65,8 +65,14 @@ export default function HomePage() {
     finally { setIsLoadingEvents(false); }
   }, [fetchCampaignData]);
 
-  useEffect(() => { void fetchCampaignData(); void fetchEvents(); }, [fetchCampaignData, fetchEvents]);
-  useEffect(() => { void fetchContribution(); }, [fetchContribution]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void fetchCampaignData(); void fetchEvents(); }, 0);
+    return () => window.clearTimeout(timer);
+  }, [fetchCampaignData, fetchEvents]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => void fetchContribution(), 0);
+    return () => window.clearTimeout(timer);
+  }, [fetchContribution]);
   useEffect(() => {
     const interval = window.setInterval(() => void fetchEvents(), 10000);
     return () => window.clearInterval(interval);
@@ -130,7 +136,7 @@ export default function HomePage() {
           <DonationForm onDonate={handleDonate} isPending={transaction.state === "pending"} />
         </div>
 
-        <ActivityFeed events={events} isLoading={isLoadingEvents} />
+        <ActivityFeed events={events} isLoading={isLoadingEvents} hasRecordedFunding={totalRaised > 0} />
         <SupporterDashboard
           contributionStroops={contribution}
           totalRaisedStroops={totalRaised}

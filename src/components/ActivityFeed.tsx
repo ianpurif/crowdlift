@@ -4,13 +4,13 @@ import { ArrowUpRight, Radio } from "lucide-react";
 import type { DonationEvent } from "@/types";
 import { getStellarExpertTxUrl, stroopsToXlm, truncateAddress } from "@/lib/stellar";
 
-interface ActivityFeedProps { events: DonationEvent[]; isLoading: boolean; }
+interface ActivityFeedProps { events: DonationEvent[]; isLoading: boolean; hasRecordedFunding: boolean; }
 
 function formatDate(timestamp: number) {
   return new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(timestamp);
 }
 
-export default function ActivityFeed({ events, isLoading }: ActivityFeedProps) {
+export default function ActivityFeed({ events, isLoading, hasRecordedFunding }: ActivityFeedProps) {
   return (
     <section id="activity" className="activity-section" aria-labelledby="activity-title">
       <div className="activity-heading">
@@ -22,7 +22,10 @@ export default function ActivityFeed({ events, isLoading }: ActivityFeedProps) {
         <div className="activity-row activity-header" aria-hidden="true"><span>Supporter</span><span>Date</span><span>Status</span><span>Amount</span><span /></div>
         {isLoading && events.length === 0 && [1,2,3].map((item) => <div className="activity-row" key={item}><i className="skeleton activity-skeleton" /></div>)}
         {!isLoading && events.length === 0 && (
-          <div className="activity-empty"><strong>No contributions recorded yet</strong><p>The first confirmed contribution will appear here after it is published by the contract.</p></div>
+          <div className="activity-empty">
+            <strong>{hasRecordedFunding ? "No recent events in this ledger window" : "No contributions recorded yet"}</strong>
+            <p>{hasRecordedFunding ? "The campaign total is recorded on-chain, but no individual events were returned for the current activity window." : "The first confirmed contribution will appear here after it is published by the contract."}</p>
+          </div>
         )}
         {events.map((event) => (
           <div className="activity-row" key={event.id}>
