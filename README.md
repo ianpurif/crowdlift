@@ -1,57 +1,142 @@
+<p align="center">
+  <img src="public/icon.png" alt="CrowdLift logo" width="96" height="96" />
+</p>
+
 # CrowdLift
 
-CrowdLift is wallet-owned crowdfunding on Stellar. Creators publish campaigns with their connected wallet, supporters contribute directly to the creator, and campaign state remains publicly verifiable.
+CrowdLift is a decentralized crowdfunding application built on Stellar. Creators use their connected wallet to publish and manage campaigns. Supporters send funds directly to the creator wallet.
 
-## Product routes
+<p align="center">
+  <a href="https://crowdlift.vercel.app/">Live Demo</a> ·
+  <a href="https://stellar.expert/explorer/testnet/contract/CC5TW6SNJVV7FQ2FMDCWW2Y2AW66AK564QBLCMUZLLSV3NHWSEYHM6YK">Smart Contract</a> ·
+  <a href="https://stellar.expert/explorer/testnet/tx/5c5e15276bc1f1ca3fc0e97b33dc6cdab7fe82463e29fa4cd344d928fc1e182a">Verified Contract Call</a>
+</p>
 
-- `/` — product introduction
-- `/campaigns` — public campaign discovery
-- `/campaigns/new` — wallet-authorized campaign creation
-- `/campaigns/[id]` — campaign details, contributions, and blockchain-verifiable activity history
-- `/dashboard` — campaigns associated with the connected wallet
-- `/dashboard/campaigns/[id]` — owner-only campaign editing and status controls
+## Submission Links
 
-## Architecture
+| Requirement | Verified information |
+| --- | --- |
+| Live demo | [https://crowdlift.vercel.app/](https://crowdlift.vercel.app/) |
+| Wallet options screenshot | [View image](public/wallet-options-available.png) |
+| Deployed smart contract | [`CC5TW6SNJVV7FQ2FMDCWW2Y2AW66AK564QBLCMUZLLSV3NHWSEYHM6YK`](https://stellar.expert/explorer/testnet/contract/CC5TW6SNJVV7FQ2FMDCWW2Y2AW66AK564QBLCMUZLLSV3NHWSEYHM6YK) |
+| Successful contract call | [`5c5e15276bc1f1ca3fc0e97b33dc6cdab7fe82463e29fa4cd344d928fc1e182a`](https://stellar.expert/explorer/testnet/tx/5c5e15276bc1f1ca3fc0e97b33dc6cdab7fe82463e29fa4cd344d928fc1e182a) |
 
-CrowdLift has no application database, custodial account system, or privileged platform administrator. The browser talks directly to Stellar services and the connected wallet:
+The transaction above is a successful `create_campaign` call for the deployed campaign registry contract.
+
+## Available Wallet Options
+
+CrowdLift uses Stellar Wallets Kit. Users can choose from the wallets available in the connection modal.
+
+![Available wallet options in CrowdLift](public/wallet-options-available.png)
+
+## Main Features
+
+- Create a campaign with a connected wallet.
+- Use the wallet address as the campaign owner identity.
+- Discover campaigns on a separate campaigns page.
+- Send contributions directly to the creator wallet.
+- Manage owned campaigns from the wallet dashboard.
+- Update, pause, or reopen a campaign with owner authorization.
+- Review campaign activity and verify transactions on the blockchain explorer.
+- Continue using the original single-campaign contract through the legacy campaign route.
+
+## How It Works
+
+1. A creator connects a Stellar wallet.
+2. The creator publishes campaign details to the registry contract.
+3. The creator wallet becomes the campaign owner and management key.
+4. A supporter approves a contribution in their wallet.
+5. The contract transfers the contribution directly to the creator.
+6. Contract events appear in the campaign Activity History.
+
+CrowdLift does not use an application database, custodial balance, or privileged platform administrator. Campaign ownership, campaign state, contribution totals, and activity records come from Stellar contracts.
+
+## Smart Contracts
+
+### Campaign Registry
+
+Address:
 
 ```text
-Browser UI -> Wallet authorization -> Soroban RPC
-                                      |-> Campaign registry contract
-                                      |-> Native asset token contract
-                                      `-> Legacy campaign contract
+CC5TW6SNJVV7FQ2FMDCWW2Y2AW66AK564QBLCMUZLLSV3NHWSEYHM6YK
 ```
 
-The campaign registry stores campaign content, creator ownership, goals, totals, status, and per-wallet contribution records. Asset transfers settle directly from the supporter wallet to the creator wallet.
+Main functions:
 
-### Contracts
+- `create_campaign`
+- `update_campaign`
+- `set_active`
+- `contribute`
+- `get_campaign`
+- `list_campaigns`
+- `get_creator_campaigns`
+- `get_contribution`
 
-- Campaign registry: `CC5TW6SNJVV7FQ2FMDCWW2Y2AW66AK564QBLCMUZLLSV3NHWSEYHM6YK`
+### Supporting Contracts
+
 - Native asset token: `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC`
-- Legacy campaign: configured with `NEXT_PUBLIC_CONTRACT_ID`
+- Legacy campaign: `CCJKTTNZGUKVKH2M3WXKGAW2IKOK3VPI553D2SA2KPI4FV2Z6DNJ4K7G`
 
-The original single-campaign contract remains supported. New campaigns use the separate registry contract, so existing campaign state and contribution behavior are preserved.
+The legacy contract remains available so existing campaign data and contribution behavior continue to work.
 
-## Local development
+## Application Routes
 
-Requirements: Node.js 20+, npm, Rust, the `wasm32v1-none` target, and Stellar CLI.
+| Route | Purpose |
+| --- | --- |
+| `/` | Product overview |
+| `/campaigns` | Campaign discovery |
+| `/campaigns/new` | Campaign creation |
+| `/campaigns/[id]` | Campaign details, contributions, and activity history |
+| `/dashboard` | Wallet-owned campaigns |
+| `/dashboard/campaigns/[id]` | Owner campaign controls |
+
+## Technology
+
+- Next.js 16 and React 19
+- TypeScript
+- Stellar SDK
+- Stellar Wallets Kit
+- Soroban smart contracts written in Rust
+- XLM through the native Stellar asset contract
+
+## Local Development
+
+Requirements:
+
+- Node.js 20 or newer
+- npm
+- Rust
+- Stellar CLI
+- Rust target `wasm32v1-none`
+
+Install and start the application:
 
 ```bash
-cp .env.local.example .env.local
 npm install
+cp .env.local.example .env.local
 npm run dev
 ```
 
-Configuration is read from these public environment variables:
+On Windows PowerShell, copy the environment file with:
 
-- `NEXT_PUBLIC_CONTRACT_ID`
-- `NEXT_PUBLIC_CAMPAIGN_REGISTRY_ID`
-- `NEXT_PUBLIC_NATIVE_TOKEN_CONTRACT_ID`
-- `NEXT_PUBLIC_SOROBAN_RPC_URL`
-- `NEXT_PUBLIC_HORIZON_URL`
-- `NEXT_PUBLIC_NETWORK_PASSPHRASE`
+```powershell
+Copy-Item .env.local.example .env.local
+```
+
+Public environment variables:
+
+```text
+NEXT_PUBLIC_CONTRACT_ID
+NEXT_PUBLIC_CAMPAIGN_REGISTRY_ID
+NEXT_PUBLIC_NATIVE_TOKEN_CONTRACT_ID
+NEXT_PUBLIC_SOROBAN_RPC_URL
+NEXT_PUBLIC_HORIZON_URL
+NEXT_PUBLIC_NETWORK_PASSPHRASE
+```
 
 ## Verification
+
+Run the application checks:
 
 ```bash
 npm run lint
@@ -59,5 +144,3 @@ npm run build
 cargo test --manifest-path contracts/campaign_registry/Cargo.toml
 stellar contract build --manifest-path contracts/campaign_registry/Cargo.toml --locked
 ```
-
-The UI deliberately avoids infrastructure labels that do not help contributors or creators. Developers can change the network endpoints and passphrase through environment configuration without changing the campaign model.
