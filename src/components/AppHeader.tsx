@@ -14,6 +14,7 @@ export default function AppHeader() {
           <a href="#campaign">Discover</a>
           <a href="#how-it-works">How it works</a>
           <a href="#activity">Activity</a>
+          <a href="#dashboard">Dashboard</a>
         </nav>
         <div className="header-actions">
           <span className="network-label"><i /> Stellar Testnet</span>

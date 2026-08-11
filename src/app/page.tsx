@@ -9,6 +9,7 @@ import CampaignCard from "@/components/CampaignCard";
 import DonationForm from "@/components/DonationForm";
 import LandingExperience from "@/components/LandingExperience";
 import SiteFooter from "@/components/SiteFooter";
+import SupporterDashboard from "@/components/SupporterDashboard";
 import TransactionStatus from "@/components/TransactionStatus";
 import { useToast } from "@/contexts/ToastContext";
 import { useWallet } from "@/contexts/WalletContext";
@@ -130,6 +131,13 @@ export default function HomePage() {
         </div>
 
         <ActivityFeed events={events} isLoading={isLoadingEvents} />
+        <SupporterDashboard
+          contributionStroops={contribution}
+          totalRaisedStroops={totalRaised}
+          goalStroops={goal}
+          events={events}
+          isLoading={isLoadingCampaign}
+        />
       </main>
       <SiteFooter />
     </div>
