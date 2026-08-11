@@ -178,10 +178,11 @@ a { color: inherit; text-decoration: none; }
 .contribution-submit { width: 100%; margin-top: 21px; }
 .signature-note { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 14px 0 0; color: var(--ink-soft); font-size: 9px; line-height: 1.4; text-align: center; }
 .supporter-record { display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 13px; padding: 19px 22px; background: #e8f1de; border: 1px solid #c7d9af; color: var(--success); }
+.supporter-record-icon { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: var(--success); color: var(--white); }
 .supporter-record > div { display: flex; flex-direction: column; }
 .supporter-record span, .supporter-record small { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
 .supporter-record strong { color: var(--ink); font-size: 18px; }
-.supporter-record small { color: var(--ink-soft); }
+.supporter-record small { color: var(--ink-soft); text-align: right; }
 
 .transaction-status { display: grid; grid-template-columns: 34px 1fr auto; gap: 14px; align-items: start; padding: 18px 20px; border: 1px solid var(--line); background: var(--white); }
 .transaction-status svg { width: 19px; height: 19px; }
@@ -513,8 +514,8 @@ a { color: inherit; text-decoration: none; }
   .campaign-assurances { grid-template-columns: 1fr; }
   .campaign-assurances > div + div { padding-left: 0; border-left: 0; border-top: 1px solid var(--line); }
   .contribution-panel { padding: 25px 20px; }
-  .supporter-record { grid-template-columns: 26px 1fr; }
-  .supporter-record small { grid-column: 2; }
+  .supporter-record { grid-template-columns: 28px 1fr; }
+  .supporter-record small { grid-column: 2; text-align: left; }
   .activity-section { margin-top: 64px; }
   .activity-heading { align-items: flex-start; flex-direction: column; gap: 12px; }
   .dashboard-section { padding-top: 82px; }

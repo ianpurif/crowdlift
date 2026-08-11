@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
 import ActivityFeed from "@/components/ActivityFeed";
 import CampaignCard from "@/components/CampaignCard";
 import DonationForm from "@/components/DonationForm";
@@ -75,7 +75,7 @@ export default function CampaignDetailClient({ campaignId }: { campaignId: strin
   return (
     <main className="shell route-main campaign-detail-route">
       <Link className="route-back" href="/campaigns"><ArrowLeft size={14} /> All campaigns</Link>
-      <div className="campaign-layout"><div className="campaign-primary"><CampaignCard campaign={campaign} /><TransactionStatus transaction={transaction} onDismiss={() => setTransaction({ state: "idle" })} />{contribution > 0 && <div className="supporter-record"><div><span>Your recorded support</span><strong>{(contribution / 10_000_000).toFixed(2)} XLM</strong></div><small>Linked to this wallet</small></div>}</div><DonationForm onDonate={donate} isPending={transaction.state === "pending"} /></div>
+      <div className="campaign-layout"><div className="campaign-primary"><CampaignCard campaign={campaign} /><TransactionStatus transaction={transaction} onDismiss={() => setTransaction({ state: "idle" })} />{contribution > 0 && <div className="supporter-record"><span className="supporter-record-icon" aria-hidden="true"><CheckCircle2 size={17} /></span><div><span>Your recorded support</span><strong>{(contribution / 10_000_000).toFixed(2)} XLM</strong></div><small>Linked to this wallet</small></div>}</div><DonationForm onDonate={donate} isPending={transaction.state === "pending"} /></div>
       <ActivityFeed events={events} isLoading={false} hasRecordedFunding={campaign.raised > 0} />
     </main>
   );
