@@ -2,9 +2,25 @@
 
 import * as StellarSdk from "@stellar/stellar-sdk";
 import { getSorobanServer, getNetworkPassphrase } from "./stellar";
-import type { DonationEvent } from "@/types";
+import type { CampaignRecord, DonationEvent } from "@/types";
 
 const CONTRACT_ID = process.env.NEXT_PUBLIC_CONTRACT_ID || "";
+
+export async function getLegacyCampaign(): Promise<CampaignRecord | null> {
+  if (!CONTRACT_ID) return null;
+  const [goal, raised] = await Promise.all([getGoal(), getTotalRaised()]);
+  return {
+    id: "legacy",
+    source: "legacy",
+    creator: CONTRACT_ID,
+    title: "CrowdLift Community Fund",
+    description: "Supporting open-source innovation and community projects across the Stellar ecosystem.",
+    category: "Open source",
+    goal,
+    raised,
+    active: true,
+  };
+}
 
 function getContract(): StellarSdk.Contract {
   if (!CONTRACT_ID) {
@@ -77,6 +93,7 @@ export async function getTotalRaised(): Promise<number> {
  * Read a donor's contribution from the contract.
  */
 export async function getContribution(donorAddress: string): Promise<number> {
+  if (!CONTRACT_ID) return 0;
   const server = getSorobanServer();
   const contract = getContract();
 
@@ -147,7 +164,7 @@ export async function buildDonateTransaction(
  */
 export async function submitTransaction(
   signedXdr: string
-): Promise<{ hash: string; success: boolean }> {
+): Promise<{ hash: string; success: boolean; returnValue?: unknown }> {
   const server = getSorobanServer();
 
   const tx = StellarSdk.TransactionBuilder.fromXDR(
@@ -177,7 +194,13 @@ export async function submitTransaction(
   );
 
   if (getResponse.status === StellarSdk.rpc.Api.GetTransactionStatus.SUCCESS) {
-    return { hash, success: true };
+    return {
+      hash,
+      success: true,
+      returnValue: getResponse.returnValue
+        ? StellarSdk.scValToNative(getResponse.returnValue)
+        : undefined,
+    };
   }
 
   throw new Error(

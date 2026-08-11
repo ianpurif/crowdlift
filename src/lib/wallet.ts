@@ -5,6 +5,8 @@ import {
   Networks,
 } from "@creit-tech/stellar-wallets-kit";
 import { defaultModules } from "@creit-tech/stellar-wallets-kit/modules/utils";
+import type { Transaction } from "@stellar/stellar-sdk";
+import { getNetworkPassphrase } from "@/lib/stellar";
 
 let initialized = false;
 
@@ -34,4 +36,13 @@ export function getAvailableWallets(): { id: string; name: string }[] {
     { id: "rabet", name: "Rabet" },
     { id: "hana", name: "Hana" },
   ];
+}
+
+export async function signContractTransaction(transaction: Transaction, address: string) {
+  initWalletKit();
+  const { signedTxXdr } = await StellarWalletsKit.signTransaction(transaction.toXDR(), {
+    networkPassphrase: getNetworkPassphrase(),
+    address,
+  });
+  return signedTxXdr;
 }

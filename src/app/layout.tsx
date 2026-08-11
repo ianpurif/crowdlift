@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
+import AppHeader from "@/components/AppHeader";
+import SiteFooter from "@/components/SiteFooter";
 import "./globals.css";
 import { WalletProviderWrapper } from "./providers";
 
 export const metadata: Metadata = {
-  title: "CrowdLift — Transparent crowdfunding on Stellar",
-  description: "Fund community-led ideas with transparent, on-chain contributions on Stellar Testnet.",
-  keywords: ["Stellar", "crowdfunding", "Soroban", "XLM", "blockchain", "dApp"],
+  title: "CrowdLift — Open crowdfunding on Stellar",
+  description: "Create and support wallet-owned campaigns with public, on-chain funding records.",
+  keywords: ["Stellar", "crowdfunding", "Soroban", "XLM", "blockchain"],
   icons: { icon: "/icon.png", shortcut: "/icon.png", apple: "/icon.png" },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body><WalletProviderWrapper>{children}</WalletProviderWrapper></body>
+      <body><WalletProviderWrapper><AppHeader />{children}<SiteFooter /></WalletProviderWrapper></body>
     </html>
   );
 }

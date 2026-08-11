@@ -12,6 +12,28 @@ export interface CampaignData {
   description: string;
 }
 
+export interface CampaignRecord {
+  id: string;
+  onChainId?: number;
+  source: "legacy" | "registry";
+  creator: string;
+  token?: string;
+  title: string;
+  description: string;
+  category: string;
+  goal: number;
+  raised: number;
+  active: boolean;
+  createdLedger?: number;
+}
+
+export interface CampaignDraft {
+  title: string;
+  description: string;
+  category: string;
+  goalXlm: number;
+}
+
 export type TransactionState = 'idle' | 'pending' | 'success' | 'failed';
 
 export interface TransactionInfo {
