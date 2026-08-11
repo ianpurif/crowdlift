@@ -7,6 +7,7 @@ import CampaignCard from "@/components/CampaignCard";
 import DonationForm from "@/components/DonationForm";
 import ActivityFeed from "@/components/ActivityFeed";
 import AppHeader from "@/components/AppHeader";
+import LandingExperience from "@/components/LandingExperience";
 import {
   getGoal,
   getTotalRaised,
@@ -228,8 +229,14 @@ export default function HomePage() {
     <div id="top" className="min-h-screen">
       <AppHeader />
 
+      <LandingExperience
+        goalStroops={goal}
+        totalRaisedStroops={totalRaised}
+        isLoading={isLoadingCampaign}
+      />
+
       {/* Main 2-Column Responsive Layout */}
-      <main className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
+      <main id="campaign" className="mx-auto max-w-6xl px-4 sm:px-6 py-16 scroll-mt-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Column */}
           <div className="lg:col-span-7 space-y-6">
