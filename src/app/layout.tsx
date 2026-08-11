@@ -3,34 +3,16 @@ import "./globals.css";
 import { WalletProviderWrapper } from "./providers";
 
 export const metadata: Metadata = {
-  title: "CrowdLift — Stellar Crowdfunding",
-  description:
-    "A decentralized crowdfunding platform built on Stellar Testnet. Support community projects with XLM donations.",
+  title: "CrowdLift — Transparent crowdfunding on Stellar",
+  description: "Fund community-led ideas with transparent, on-chain contributions on Stellar Testnet.",
   keywords: ["Stellar", "crowdfunding", "Soroban", "XLM", "blockchain", "dApp"],
-  icons: {
-    icon: "/icon.png",
-    shortcut: "/icon.png",
-    apple: "/icon.png",
-  },
+  icons: { icon: "/icon.png", shortcut: "/icon.png", apple: "/icon.png" },
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="icon" href="/icon.png" sizes="any" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body>
-        <WalletProviderWrapper>{children}</WalletProviderWrapper>
-      </body>
+    <html lang="en">
+      <body><WalletProviderWrapper>{children}</WalletProviderWrapper></body>
     </html>
   );
 }

@@ -3,10 +3,10 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/contexts/ToastContext";
-import WalletButton from "@/components/WalletButton";
 import CampaignCard from "@/components/CampaignCard";
 import DonationForm from "@/components/DonationForm";
 import ActivityFeed from "@/components/ActivityFeed";
+import AppHeader from "@/components/AppHeader";
 import {
   getGoal,
   getTotalRaised,
@@ -225,29 +225,8 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] selection:bg-[#2563EB]/10 selection:text-[#2563EB]">
-      {/* Top Header */}
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-[#E2E8F0] h-16 flex items-center">
-        <div className="mx-auto flex max-w-6xl w-full items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-2.5">
-            <img
-              src="/icon.png"
-              alt="CrowdLift Logo"
-              className="h-9 w-9 rounded-2xl object-cover shadow-sm border border-[#E2E8F0]"
-            />
-            <div className="flex items-center gap-2">
-              <span className="text-xl font-extrabold text-[#0F172A] tracking-tight">
-                CrowdLift
-              </span>
-              <span className="text-[10px] font-bold text-[#2563EB] bg-[#DBEAFE] px-2 py-0.5 rounded-full uppercase tracking-wider">
-                Testnet
-              </span>
-            </div>
-          </div>
-
-          <WalletButton />
-        </div>
-      </header>
+    <div id="top" className="min-h-screen">
+      <AppHeader />
 
       {/* Main 2-Column Responsive Layout */}
       <main className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
