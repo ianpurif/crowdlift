@@ -6,7 +6,7 @@ import { ArrowRight, ArrowUpRight, Loader2, Plus, Settings2, Wallet } from "luci
 import CampaignListCard from "@/components/CampaignListCard";
 import { useWallet } from "@/contexts/WalletContext";
 import { getContribution } from "@/lib/contract";
-import { getCreatorCampaigns } from "@/lib/registry";
+import { getCreatorCampaigns, getSupportedCampaigns } from "@/lib/registry";
 import { stroopsToXlm, truncateAddress } from "@/lib/stellar";
 import type { CampaignRecord } from "@/types";
 
@@ -14,17 +14,19 @@ export default function DashboardClient() {
   const { address, balance, isConnected, isConnecting, connect } = useWallet();
   const [campaigns, setCampaigns] = useState<CampaignRecord[]>([]);
   const [supported, setSupported] = useState(0);
+  const [supportedCampaigns, setSupportedCampaigns] = useState<Array<{ campaign: CampaignRecord; amount: number }>>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
-    if (!address) { setCampaigns([]); setSupported(0); return; }
+    if (!address) { setCampaigns([]); setSupported(0); setSupportedCampaigns([]); return; }
     setLoading(true);
     setError("");
     try {
-      const [owned, legacySupport] = await Promise.all([getCreatorCampaigns(address), getContribution(address)]);
+      const [owned, legacySupport, registrySupport] = await Promise.all([getCreatorCampaigns(address), getContribution(address), getSupportedCampaigns(address)]);
       setCampaigns(owned);
       setSupported(legacySupport);
+      setSupportedCampaigns(registrySupport);
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Your dashboard could not be loaded."); }
     finally { setLoading(false); }
   }, [address]);
@@ -48,6 +50,8 @@ export default function DashboardClient() {
           </section>
 
           {supported > 0 && <section className="dashboard-support"><div><span>Your support record</span><strong>{stroopsToXlm(supported).toFixed(2)} XLM</strong></div><Link href="/campaigns/legacy">View supported campaign <ArrowRight size={14} /></Link></section>}
+
+          {supportedCampaigns.length > 0 && <section className="supported-campaigns"><div className="section-row"><div><p className="eyebrow">Your contributions</p><h2>Campaigns you support</h2></div></div><div className="supported-list">{supportedCampaigns.map(({ campaign, amount }) => <Link className="supported-item" href={`/campaigns/${campaign.id}`} key={campaign.id}><div><strong>{campaign.title}</strong><span>{campaign.active ? "Open" : "Paused"}</span></div><p><strong>{stroopsToXlm(amount).toFixed(2)} XLM</strong><span>contributed</span></p><ArrowRight size={15} /></Link>)}</div></section>}
 
           <section className="owned-campaigns">
             <div className="section-row"><div><p className="eyebrow">Owned by {truncateAddress(address)}</p><h2>Your campaigns</h2></div></div>

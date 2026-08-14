@@ -116,6 +116,14 @@ export async function getRegistryContribution(id: number, donor: string): Promis
   ));
 }
 
+export async function getSupportedCampaigns(donor: string) {
+  const campaigns = await getRegistryCampaigns();
+  const amounts = await Promise.all(campaigns.map((campaign) => getRegistryContribution(campaign.onChainId || 0, donor)));
+  return campaigns
+    .map((campaign, index) => ({ campaign, amount: amounts[index] }))
+    .filter((position) => position.amount > 0);
+}
+
 export async function getRegistryCampaignActivity(
   campaignId: number,
   createdLedger?: number,
