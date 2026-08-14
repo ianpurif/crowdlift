@@ -178,6 +178,9 @@ a { color: inherit; text-decoration: none; }
 .form-error svg { flex: 0 0 auto; margin-top: 1px; }
 .contribution-submit { width: 100%; margin-top: 21px; }
 .signature-note { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 14px 0 0; color: var(--ink-soft); font-size: 9px; line-height: 1.4; text-align: center; }
+.owner-panel h2 { margin: 8px 0 9px; font-size: 25px; letter-spacing: -.04em; }
+.owner-panel > p:not(.eyebrow) { margin: 0; color: var(--ink-soft); font-size: 12px; line-height: 1.6; }
+.owner-panel .button-primary { width: 100%; margin-top: 24px; }
 .supporter-record { display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 13px; padding: 19px 22px; background: #e8f1de; border: 1px solid #c7d9af; color: var(--success); }
 .supporter-record-icon { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: var(--success); color: var(--white); }
 .supporter-record > div { display: flex; flex-direction: column; }

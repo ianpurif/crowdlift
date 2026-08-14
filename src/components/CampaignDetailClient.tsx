@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, Settings2 } from "lucide-react";
 import ActivityFeed from "@/components/ActivityFeed";
 import CampaignCard from "@/components/CampaignCard";
 import DonationForm from "@/components/DonationForm";
@@ -28,6 +28,7 @@ export default function CampaignDetailClient({ campaignId }: { campaignId: strin
 
   const isLegacy = campaignId === "legacy";
   const registryId = isLegacy ? 0 : Number(campaignId.replace("registry-", ""));
+  const isOwner = campaign?.source === "registry" && Boolean(address) && campaign.creator === address;
 
   const loadCampaign = useCallback(async () => {
     setLoading(true);
@@ -95,7 +96,7 @@ export default function CampaignDetailClient({ campaignId }: { campaignId: strin
   return (
     <main className="shell route-main campaign-detail-route">
       <Link className="route-back" href="/campaigns"><ArrowLeft size={14} /> All campaigns</Link>
-      <div className="campaign-layout"><div className="campaign-primary"><CampaignCard campaign={campaign} /><TransactionStatus transaction={transaction} onDismiss={() => setTransaction({ state: "idle" })} />{contribution > 0 && <div className="supporter-record"><span className="supporter-record-icon" aria-hidden="true"><CheckCircle2 size={17} /></span><div><span>Your recorded support</span><strong>{(contribution / 10_000_000).toFixed(2)} XLM</strong></div><small>Linked to this wallet</small></div>}</div><DonationForm onDonate={donate} isPending={transaction.state === "pending"} /></div>
+      <div className="campaign-layout"><div className="campaign-primary"><CampaignCard campaign={campaign} /><TransactionStatus transaction={transaction} onDismiss={() => setTransaction({ state: "idle" })} />{contribution > 0 && <div className="supporter-record"><span className="supporter-record-icon" aria-hidden="true"><CheckCircle2 size={17} /></span><div><span>Your recorded support</span><strong>{(contribution / 10_000_000).toFixed(2)} XLM</strong></div><small>Linked to this wallet</small></div>}</div>{isOwner ? <aside className="contribution-panel owner-panel"><p className="eyebrow">Your campaign</p><h2>Manage this campaign</h2><p>This wallet owns the campaign. Update its details or control whether it accepts contributions.</p><Link className="button-primary" href={`/dashboard/campaigns/${campaign.onChainId}`}><Settings2 size={16} /> Open campaign controls</Link></aside> : <DonationForm onDonate={donate} isPending={transaction.state === "pending"} />}</div>
       <ActivityFeed events={events} isLoading={activityLoading} hasRecordedFunding={campaign.raised > 0} />
     </main>
   );
