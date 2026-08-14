@@ -5,7 +5,7 @@ import { AlertCircle, ArrowRight, Loader2, LockKeyhole, Wallet } from "lucide-re
 import { useWallet } from "@/contexts/WalletContext";
 
 interface DonationFormProps {
-  onDonate: (amountXlm: number) => Promise<void>;
+  onDonate: (amountXlm: number, connectedAddress?: string) => Promise<void>;
   isPending: boolean;
 }
 
@@ -19,18 +19,18 @@ export default function DonationForm({ onDonate, isPending }: DonationFormProps)
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
-    if (!isConnected) { await connect(); return; }
-
     const numAmount = Number(amount);
     if (!amount || !Number.isFinite(numAmount)) { setError("Enter a valid XLM amount."); return; }
     if (numAmount < 0.0000001) { setError("The minimum contribution is 0.0000001 XLM (one stroop)."); return; }
     if ((amount.split(".")[1]?.length || 0) > 7) { setError("XLM supports up to 7 decimal places."); return; }
-    if (numAmount > spendableBalance) {
+    if (isConnected && numAmount > spendableBalance) {
       setError("This exceeds your spendable balance after keeping 1 XLM available.");
       return;
     }
+    const connectedAddress = isConnected ? undefined : await connect();
+    if (!isConnected && !connectedAddress) return;
 
-    try { await onDonate(numAmount); setAmount(""); }
+    try { await onDonate(numAmount, connectedAddress || undefined); setAmount(""); }
     catch (err) { setError(err instanceof Error ? err.message : "The contribution could not be completed."); }
   };
 

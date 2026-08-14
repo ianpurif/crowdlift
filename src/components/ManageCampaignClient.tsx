@@ -35,12 +35,14 @@ export default function ManageCampaignClient({ id }: { id: number }) {
   useEffect(() => { const timer = window.setTimeout(() => void load(), 0); return () => window.clearTimeout(timer); }, [load]);
 
   const runTransaction = async (kind: "save" | "status") => {
-    if (!address || !campaign) { await connect(); return; }
+    const signer = address || await connect();
+    if (!signer || !campaign) return;
+    if (signer !== campaign.creator) { setError("Connect the wallet that owns this campaign."); return; }
     setSaving(true); setError("");
     const toastId = toast.loading(kind === "save" ? "Saving campaign" : "Updating campaign status", "Approve the change in your wallet.");
     try {
-      const transaction = kind === "save" ? await buildUpdateCampaignTransaction(address, id, draft) : await buildSetCampaignActiveTransaction(address, id, !campaign.active);
-      const signed = await signContractTransaction(transaction, address);
+      const transaction = kind === "save" ? await buildUpdateCampaignTransaction(signer, id, draft) : await buildSetCampaignActiveTransaction(signer, id, !campaign.active);
+      const signed = await signContractTransaction(transaction, signer);
       const result = await submitTransaction(signed);
       dismissToast(toastId);
       toast.success(kind === "save" ? "Campaign updated" : campaign.active ? "Campaign paused" : "Campaign reopened", "The public campaign record has been updated.", result.hash);

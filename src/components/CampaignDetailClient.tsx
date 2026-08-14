@@ -16,7 +16,7 @@ import { xlmToStroops } from "@/lib/stellar";
 import type { CampaignActivity, CampaignRecord, TransactionInfo } from "@/types";
 
 export default function CampaignDetailClient({ campaignId }: { campaignId: string }) {
-  const { address, isConnected, refreshBalance } = useWallet();
+  const { address, refreshBalance } = useWallet();
   const { toast, dismissToast } = useToast();
   const [campaign, setCampaign] = useState<CampaignRecord | null>(null);
   const [contribution, setContribution] = useState(0);
@@ -66,14 +66,15 @@ export default function CampaignDetailClient({ campaignId }: { campaignId: strin
     return () => { cancelled = true; };
   }, [address, campaign, isLegacy, registryId]);
 
-  const donate = async (amountXlm: number) => {
-    if (!isConnected || !address || !campaign) { toast.error("Wallet disconnected", "Connect your wallet before contributing."); return; }
+  const donate = async (amountXlm: number, connectedAddress?: string) => {
+    const donor = connectedAddress || address;
+    if (!donor || !campaign) { toast.error("Wallet disconnected", "Connect your wallet before contributing."); return; }
     if (!campaign.active) { toast.error("Campaign paused", "This campaign is not currently accepting contributions."); return; }
     setTransaction({ state: "pending" });
     const toastId = toast.loading("Preparing contribution", `Preparing ${amountXlm} XLM for wallet approval.`);
     try {
-      const pending = isLegacy ? await buildDonateTransaction(address, xlmToStroops(amountXlm)) : await buildRegistryContributionTransaction(address, registryId, xlmToStroops(amountXlm));
-      const signed = await signContractTransaction(pending, address);
+      const pending = isLegacy ? await buildDonateTransaction(donor, xlmToStroops(amountXlm)) : await buildRegistryContributionTransaction(donor, registryId, xlmToStroops(amountXlm));
+      const signed = await signContractTransaction(pending, donor);
       const result = await submitTransaction(signed);
       dismissToast(toastId);
       toast.success("Contribution confirmed", `${amountXlm} XLM was added to the campaign.`, result.hash);

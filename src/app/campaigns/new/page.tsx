@@ -26,20 +26,21 @@ export default function NewCampaignPage() {
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError("");
-    if (!isConnected || !address) { await connect(); return; }
     if (!isCampaignRegistryConfigured()) { setError("Campaign publishing is not configured."); return; }
     if (!draft.title.trim() || !draft.description.trim() || draft.goalXlm <= 0) { setError("Complete the title, story, and funding goal."); return; }
+    const creator = address || await connect();
+    if (!creator) return;
 
     setSubmitting(true);
     const toastId = toast.loading("Publishing campaign", "Review and approve the campaign in your wallet.");
     try {
-      const transaction = await buildCreateCampaignTransaction(address, { ...draft, title: draft.title.trim(), description: draft.description.trim() });
-      const signed = await signContractTransaction(transaction, address);
+      const transaction = await buildCreateCampaignTransaction(creator, { ...draft, title: draft.title.trim(), description: draft.description.trim() });
+      const signed = await signContractTransaction(transaction, creator);
       const result = await submitTransaction(signed);
       const returned = result.returnValue as { id?: bigint | number } | undefined;
       let id = returned?.id ? Number(returned.id) : 0;
       if (!id) {
-        const owned = await getCreatorCampaigns(address);
+        const owned = await getCreatorCampaigns(creator);
         id = owned.at(-1)?.onChainId || 0;
       }
       dismissToast(toastId);

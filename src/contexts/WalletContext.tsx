@@ -23,7 +23,7 @@ interface WalletContextType {
   walletName: string;
   isConnecting: boolean;
   error: string | null;
-  connect: () => Promise<void>;
+  connect: () => Promise<string | null>;
   disconnect: () => void;
   switchWallet: (walletId: string) => Promise<void>;
   refreshBalance: () => Promise<void>;
@@ -58,7 +58,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, [address]);
 
   // Connect via authModal (opens the wallet selection modal with all supported wallets)
-  const connect = useCallback(async () => {
+  const connect = useCallback(async (): Promise<string | null> => {
     setIsConnecting(true);
     setError(null);
 
@@ -96,7 +96,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
         const bal = await fetchXlmBalance(res.address);
         setBalance(bal);
+        return res.address;
       }
+      return null;
     } catch (err: unknown) {
       const rawMessage =
         err instanceof Error
@@ -128,6 +130,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       }
 
       setIsConnected(false);
+      return null;
     } finally {
       setIsConnecting(false);
     }
