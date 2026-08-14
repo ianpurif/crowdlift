@@ -14,6 +14,7 @@ export default function DonationForm({ onDonate, isPending }: DonationFormProps)
   const [amount, setAmount] = useState("");
   const [error, setError] = useState<string | null>(null);
   const presetAmounts = [10, 25, 50, 100];
+  const spendableBalance = Math.max(0, Number(balance || "0") - 1);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -23,10 +24,9 @@ export default function DonationForm({ onDonate, isPending }: DonationFormProps)
     const numAmount = Number(amount);
     if (!amount || !Number.isFinite(numAmount)) { setError("Enter a valid XLM amount."); return; }
     if (numAmount < 0.0000001) { setError("The minimum contribution is 0.0000001 XLM (one stroop)."); return; }
-
-    const balanceNum = Number(balance || "0");
-    if (balanceNum > 0 && numAmount > balanceNum - 0.5) {
-      setError(`This exceeds your available balance. Keep at least 0.5 XLM for network fees and the account reserve.`);
+    if ((amount.split(".")[1]?.length || 0) > 7) { setError("XLM supports up to 7 decimal places."); return; }
+    if (numAmount > spendableBalance) {
+      setError("This exceeds your spendable balance after keeping 1 XLM available.");
       return;
     }
 
@@ -47,7 +47,7 @@ export default function DonationForm({ onDonate, isPending }: DonationFormProps)
           <legend>Quick amounts</legend>
           <div>
             {presetAmounts.map((preset) => (
-              <button key={preset} type="button" aria-pressed={amount === String(preset)} onClick={() => { setAmount(String(preset)); setError(null); }}>
+              <button key={preset} type="button" disabled={isPending || (isConnected && preset > spendableBalance)} aria-pressed={amount === String(preset)} onClick={() => { setAmount(String(preset)); setError(null); }}>
                 {preset}<small>XLM</small>
               </button>
             ))}
@@ -57,18 +57,18 @@ export default function DonationForm({ onDonate, isPending }: DonationFormProps)
         <label className="amount-field">
           <span>Contribution amount</span>
           <span className="amount-input-wrap">
-            <input className="field" type="number" inputMode="decimal" value={amount} onChange={(e) => { setAmount(e.target.value); setError(null); }} placeholder="0.00" min="0.0000001" step="any" aria-describedby="amount-help" />
+            <input className="field" type="number" inputMode="decimal" value={amount} onChange={(e) => { setAmount(e.target.value); setError(null); }} placeholder="0.00" min="0.0000001" max={isConnected ? spendableBalance : undefined} step="0.0000001" aria-describedby="amount-help" />
             <strong>XLM</strong>
           </span>
         </label>
 
         <div id="amount-help" className="balance-line">
-          <span>Available balance</span><strong>{isConnected ? `${Number(balance).toFixed(2)} XLM` : "Connect to view"}</strong>
+          <span>Spendable balance</span><strong>{isConnected ? `${spendableBalance.toFixed(2)} XLM` : "Connect to view"}</strong>
         </div>
 
         {error && <p className="form-error" role="alert"><AlertCircle size={15} />{error}</p>}
 
-        <button className="button-primary contribution-submit" type="submit" disabled={isPending}>
+        <button className="button-primary contribution-submit" type="submit" disabled={isPending || (isConnected && spendableBalance <= 0)}>
           {isPending ? <><Loader2 size={17} className="animate-spin" /> Confirming on Stellar…</> : isConnected ? <>Review contribution <ArrowRight size={17} /></> : <><Wallet size={17} /> Connect wallet to continue</>}
         </button>
 
