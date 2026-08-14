@@ -80,12 +80,18 @@ async function buildWrite(source: string, method: string, ...args: StellarSdk.xd
 
 export async function getRegistryCampaigns(): Promise<CampaignRecord[]> {
   if (!isCampaignRegistryConfigured()) return [];
-  const values = await read(
+  const total = Number(await read("get_campaign_count"));
+  if (!total) return [];
+
+  const pageSize = 50;
+  const offsets = Array.from({ length: Math.ceil(total / pageSize) }, (_, index) => index * pageSize + 1);
+  const pages = await Promise.all(offsets.map((offset) => read(
     "list_campaigns",
-    StellarSdk.nativeToScVal(1, { type: "u64" }),
-    StellarSdk.nativeToScVal(50, { type: "u32" }),
-  ) as NativeCampaign[];
-  return values.map(decodeCampaign);
+    StellarSdk.nativeToScVal(offset, { type: "u64" }),
+    StellarSdk.nativeToScVal(pageSize, { type: "u32" }),
+  ) as Promise<NativeCampaign[]>));
+
+  return pages.flat().map(decodeCampaign);
 }
 
 export async function getRegistryCampaign(id: number): Promise<CampaignRecord | null> {
