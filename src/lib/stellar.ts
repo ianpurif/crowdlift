@@ -23,6 +23,26 @@ export function getNetworkPassphrase(): string {
   return NETWORK_PASSPHRASE;
 }
 
+export async function fetchContractEvents(
+  filters: StellarSdk.rpc.Api.EventFilter[],
+  startLedger: number,
+  maximum = 1_000,
+) {
+  const server = getSorobanServer();
+  const pageSize = Math.min(200, maximum);
+  let response = await server.getEvents({ startLedger, filters, limit: pageSize });
+  const events = [...response.events];
+
+  while (response.events.length === pageSize && events.length < maximum) {
+    const previousCursor = response.cursor;
+    response = await server.getEvents({ cursor: previousCursor, filters, limit: Math.min(pageSize, maximum - events.length) });
+    if (!response.events.length || response.cursor === previousCursor) break;
+    events.push(...response.events);
+  }
+
+  return events;
+}
+
 /**
  * Fetch native XLM balance for a Stellar address using Horizon REST API.
  */

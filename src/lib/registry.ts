@@ -1,7 +1,7 @@
 "use client";
 
 import * as StellarSdk from "@stellar/stellar-sdk";
-import { getNetworkPassphrase, getSorobanServer } from "@/lib/stellar";
+import { fetchContractEvents, getNetworkPassphrase, getSorobanServer } from "@/lib/stellar";
 import type { CampaignActivity, CampaignDraft, CampaignRecord } from "@/types";
 
 const REGISTRY_ID =
@@ -137,13 +137,9 @@ export async function getRegistryCampaignActivity(
       limit: 1,
     });
     const startLedger = Math.max(retention.oldestLedger, createdLedger || retention.oldestLedger);
-    const response = await server.getEvents({
-      startLedger,
-      filters,
-      limit: 200,
-    });
+    const events = await fetchContractEvents(filters, startLedger);
 
-    return response.events
+    return events
       .filter((event) => event.inSuccessfulContractCall)
       .flatMap((event): CampaignActivity[] => {
         try {

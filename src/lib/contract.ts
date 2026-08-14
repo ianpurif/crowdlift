@@ -1,7 +1,7 @@
 "use client";
 
 import * as StellarSdk from "@stellar/stellar-sdk";
-import { getSorobanServer, getNetworkPassphrase } from "./stellar";
+import { fetchContractEvents, getSorobanServer, getNetworkPassphrase } from "./stellar";
 import type { CampaignActivity, CampaignRecord } from "@/types";
 
 const CONTRACT_ID = process.env.NEXT_PUBLIC_CONTRACT_ID || "";
@@ -222,24 +222,17 @@ export async function fetchLegacyCampaignActivity(
     const latestLedgerResponse = await server.getLatestLedger();
     const currentLedger = latestLedgerResponse.sequence;
 
-    // Look back ~10,000 ledgers (~14 hours of Stellar Testnet history)
-    const from = startLedger || Math.max(1, currentLedger - 10000);
-
     const topicDonate = StellarSdk.xdr.ScVal.scvSymbol("donate").toXDR("base64");
+    const filters: StellarSdk.rpc.Api.EventFilter[] = [{
+      type: "contract",
+      contractIds: [CONTRACT_ID],
+      topics: [[topicDonate]],
+    }];
+    const retention = await server.getEvents({ startLedger: currentLedger, filters, limit: 1 });
+    const from = Math.max(retention.oldestLedger, startLedger || retention.oldestLedger);
+    const contractEvents = await fetchContractEvents(filters, from);
 
-    const eventsResponse = await server.getEvents({
-      startLedger: from,
-      filters: [
-        {
-          type: "contract",
-          contractIds: [CONTRACT_ID],
-          topics: [[topicDonate]],
-        },
-      ],
-      limit: 50,
-    });
-
-    const events: CampaignActivity[] = (eventsResponse.events || []).map(
+    const events: CampaignActivity[] = contractEvents.map(
       (event, index) => {
         let donor = "Unknown";
         let amount = 0;
