@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body><WalletProviderWrapper><AppHeader />{children}<SiteFooter /></WalletProviderWrapper></body>
+      <body><WalletProviderWrapper><a className="skip-link" href="#main-content">Skip to main content</a><AppHeader /><div id="main-content" tabIndex={-1}>{children}</div><SiteFooter /></WalletProviderWrapper></body>
     </html>
   );
 }

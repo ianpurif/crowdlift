@@ -30,6 +30,8 @@ button, a { -webkit-tap-highlight-color: transparent; }
 a { color: inherit; text-decoration: none; }
 ::selection { background: var(--signal); color: var(--ink); }
 :focus-visible { outline: 3px solid color-mix(in srgb, var(--focus) 35%, transparent); outline-offset: 3px; }
+.skip-link { position: fixed; z-index: 200; top: 10px; left: 10px; padding: 10px 14px; background: var(--signal); color: var(--ink); font-size: 11px; font-weight: 850; transform: translateY(-160%); transition: transform 140ms ease; }
+.skip-link:focus { transform: translateY(0); }
 
 .shell { width: min(1180px, calc(100% - 40px)); margin-inline: auto; }
 .site-header { position: sticky; top: 0; z-index: 40; border-bottom: 1px solid rgba(16, 37, 34, .12); background: rgba(245, 243, 237, .92); backdrop-filter: blur(18px); }
@@ -44,6 +46,7 @@ a { color: inherit; text-decoration: none; }
 .desktop-nav { display: flex; align-items: center; gap: 30px; margin-left: auto; }
 .desktop-nav a { font-size: 13px; font-weight: 650; color: var(--ink-soft); transition: color 160ms ease; }
 .desktop-nav a:hover { color: var(--ink); }
+.desktop-nav a[aria-current="page"] { color: var(--ink); text-decoration: underline; text-decoration-color: var(--signal-dark); text-decoration-thickness: 2px; text-underline-offset: 6px; }
 .header-actions { display: flex; align-items: center; gap: 14px; }
 .network-label { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .08em; white-space: nowrap; }
 .network-label i { width: 7px; height: 7px; border-radius: 50%; background: var(--signal-dark); box-shadow: 0 0 0 4px rgba(130, 173, 46, .12); }
@@ -448,6 +451,7 @@ a { color: inherit; text-decoration: none; }
   .mobile-nav { display: grid; grid-template-columns: repeat(3, 1fr); padding: 0 0 15px; }
   .mobile-nav a { padding: 13px 10px; border: 1px solid var(--line); border-right: 0; background: var(--white); font-size: 11px; font-weight: 750; text-align: center; }
   .mobile-nav a:last-child { border-right: 1px solid var(--line); }
+  .mobile-nav a[aria-current="page"] { background: var(--signal); color: var(--ink); }
   .footer-grid { grid-template-columns: 1fr 1fr; }
   .footer-legal { align-items: flex-start; text-align: left; }
   .landing-hero { padding-top: 54px; }
