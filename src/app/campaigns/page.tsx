@@ -11,6 +11,8 @@ import type { CampaignRecord } from "@/types";
 export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<CampaignRecord[]>([]);
   const [query, setQuery] = useState("");
+  const [status, setStatus] = useState<"all" | "open" | "paused">("all");
+  const [sort, setSort] = useState<"newest" | "raised" | "progress">("newest");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -19,7 +21,7 @@ export default function CampaignsPage() {
     setError("");
     try {
       const [legacy, created] = await Promise.all([getLegacyCampaign(), getRegistryCampaigns()]);
-      setCampaigns([...(legacy ? [legacy] : []), ...created].reverse());
+      setCampaigns([...(legacy ? [legacy] : []), ...created]);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Campaigns could not be loaded.");
     } finally { setLoading(false); }
@@ -29,9 +31,17 @@ export default function CampaignsPage() {
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    if (!normalized) return campaigns;
-    return campaigns.filter((campaign) => `${campaign.title} ${campaign.description} ${campaign.category}`.toLowerCase().includes(normalized));
-  }, [campaigns, query]);
+    const matches = campaigns.filter((campaign) => {
+      const matchesQuery = !normalized || `${campaign.title} ${campaign.description} ${campaign.category}`.toLowerCase().includes(normalized);
+      const matchesStatus = status === "all" || (status === "open" ? campaign.active : !campaign.active);
+      return matchesQuery && matchesStatus;
+    });
+    return [...matches].sort((left, right) => {
+      if (sort === "raised") return right.raised - left.raised;
+      if (sort === "progress") return (right.raised / right.goal) - (left.raised / left.goal);
+      return (right.createdLedger || right.onChainId || 0) - (left.createdLedger || left.onChainId || 0);
+    });
+  }, [campaigns, query, sort, status]);
 
   return (
     <main className="shell route-main">
@@ -42,7 +52,11 @@ export default function CampaignsPage() {
 
       <div className="campaign-toolbar">
         <label><Search size={16} /><span className="sr-only">Search campaigns</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by title, category, or purpose" /></label>
-        <span>{filtered.length} {filtered.length === 1 ? "campaign" : "campaigns"}</span>
+        <div className="campaign-controls">
+          <div className="campaign-filter" aria-label="Filter campaigns by status">{(["all", "open", "paused"] as const).map((value) => <button type="button" key={value} aria-pressed={status === value} onClick={() => setStatus(value)}>{value}</button>)}</div>
+          <select aria-label="Sort campaigns" value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}><option value="newest">Newest</option><option value="raised">Most raised</option><option value="progress">Closest to goal</option></select>
+          <span>{filtered.length} {filtered.length === 1 ? "campaign" : "campaigns"}</span>
+        </div>
       </div>
 
       {loading ? <div className="route-loading"><Loader2 className="animate-spin" /><span>Loading public campaign records…</span></div> : error ? (

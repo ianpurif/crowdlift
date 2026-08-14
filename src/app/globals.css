@@ -298,7 +298,13 @@ a { color: inherit; text-decoration: none; }
 .campaign-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 25px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
 .campaign-toolbar label { width: min(520px, 100%); display: flex; align-items: center; gap: 10px; padding: 0 15px; border: 1px solid var(--line); background: var(--white); color: var(--ink-soft); }
 .campaign-toolbar input { width: 100%; height: 45px; border: 0; outline: 0; background: transparent; color: var(--ink); font-size: 12px; }
-.campaign-toolbar > span { color: var(--ink-soft); font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+.campaign-controls { display: flex; align-items: center; gap: 12px; }
+.campaign-controls > span { color: var(--ink-soft); font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+.campaign-filter { display: flex; border: 1px solid var(--line); background: var(--white); }
+.campaign-filter button { min-height: 34px; padding: 0 10px; border: 0; background: transparent; color: var(--ink-soft); font-size: 9px; font-weight: 800; text-transform: capitalize; cursor: pointer; }
+.campaign-filter button + button { border-left: 1px solid var(--line); }
+.campaign-filter button[aria-pressed="true"] { background: var(--ink); color: var(--white); }
+.campaign-controls select { min-height: 36px; padding: 0 28px 0 10px; border: 1px solid var(--line); background: var(--white); color: var(--ink); font-size: 9px; font-weight: 750; }
 .campaign-list-grid, .owned-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
 .campaign-list-card { min-width: 0; overflow: hidden; border: 1px solid var(--line); background: var(--white); transition: transform 180ms ease, box-shadow 180ms ease; }
 .campaign-list-card:hover { transform: translateY(-3px); box-shadow: 0 18px 45px rgba(16,37,34,.09); }
@@ -485,6 +491,10 @@ a { color: inherit; text-decoration: none; }
   .route-heading, .manage-heading { align-items: flex-start; flex-direction: column; gap: 21px; }
   .route-heading .button-primary { width: 100%; }
   .campaign-toolbar { align-items: stretch; flex-direction: column; gap: 11px; }
+  .campaign-controls { align-items: stretch; flex-wrap: wrap; }
+  .campaign-filter { flex: 1; }
+  .campaign-filter button { flex: 1; }
+  .campaign-controls > span { width: 100%; }
   .campaign-list-grid, .owned-list { grid-template-columns: 1fr; }
   .campaign-form { padding: 25px 20px; }
   .campaign-form-fields { grid-template-columns: 1fr; }
